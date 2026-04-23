@@ -1,0 +1,22 @@
+// app/admin/layout.tsx
+
+import AdminHeader from "../components/admin/AdminHeader";
+import AdminSidebar from "../components/admin/AdminSidebar";
+
+// Layout khusus area admin
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="admin-shell">
+      <AdminSidebar />
+
+      <div className="admin-main">
+        <AdminHeader />
+        <main className="admin-content">{children}</main>
+      </div>
+    </div>
+  );
+}
