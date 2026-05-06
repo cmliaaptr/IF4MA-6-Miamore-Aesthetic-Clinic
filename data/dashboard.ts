@@ -163,3 +163,43 @@ export const reportList: ReportItem[] = [
   { id: 11, fullName: "Dewi Melati Sukma", treatment: "Whitening Facial", status: "Konfirmasi" },
   { id: 12, fullName: "Andi Syahputra", treatment: "Botox", status: "Booking" },
 ];
+
+export type PaymentItem = {
+  id: number;
+  invoice: string;
+  customerName: string;
+  treatment: string;
+  total: string;
+  status: "Lunas" | "Pending" | "Expired" | "Gagal";
+  paidAt: string;
+};
+
+export const paymentList: PaymentItem[] = [
+  {
+    id: 1,
+    invoice: "INV001",
+    customerName: "Putri Camelia Sari",
+    treatment: "Facial Glow",
+    total: "Rp150.000",
+    status: "Lunas",
+    paidAt: "10:30",
+  },
+  {
+    id: 2,
+    invoice: "INV002",
+    customerName: "Ramadhani Akbar",
+    treatment: "Acne Treatment",
+    total: "Rp200.000",
+    status: "Pending",
+    paidAt: "-",
+  },
+  {
+    id: 3,
+    invoice: "INV003",
+    customerName: "Dea Asnuari",
+    treatment: "Whitening Facial",
+    total: "Rp180.000",
+    status: "Expired",
+    paidAt: "-",
+  },
+];

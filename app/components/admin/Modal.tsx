@@ -34,6 +34,7 @@ export default function Modal({
         style={{ maxWidth: width }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* HEADER */}
         {showHeader && (
           <div className="modal-header">
             {title && <h2 className="modal-title">{title}</h2>}
@@ -44,12 +45,13 @@ export default function Modal({
                 className="modal-close-button"
                 onClick={onClose}
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             )}
           </div>
         )}
 
+        {/* BODY */}
         <div className="modal-body">{children}</div>
       </div>
     </div>
