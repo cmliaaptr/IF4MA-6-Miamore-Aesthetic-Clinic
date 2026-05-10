@@ -1,10 +1,11 @@
-import RegisterCard from "./components/register/RegisterCard";
+import LoginCard from "../components/login/LoginCard";
 
-export default function RegisterPage() {
+export default function LoginPage() {
   return (
     <main
       className="
-        min-h-screen flex items-center justify-center
+        min-h-screen
+        flex items-center justify-center
         bg-cover bg-center
         px-4 py-8
       "
@@ -12,7 +13,7 @@ export default function RegisterPage() {
         backgroundImage: "url('/images/background.jpg')",
       }}
     >
-      <RegisterCard />
+      <LoginCard />
     </main>
   );
 }
