@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Lock, UserCircle } from "lucide-react";
 import LoginInput from "./LoginInput";
+import LoginSelect from "./LoginSelect";
 
 export default function LoginCard() {
   return (
@@ -41,6 +42,8 @@ export default function LoginCard() {
       </h1>
 
       <form className="space-y-6">
+        <LoginSelect />
+
         <LoginInput
           type="text"
           placeholder="Username"

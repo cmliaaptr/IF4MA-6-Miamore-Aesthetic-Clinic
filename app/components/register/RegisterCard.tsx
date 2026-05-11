@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Mail, UserCircle, Lock } from "lucide-react";
 import RegisterInput from "./RegisterInput";
+import RegisterSelect from "./RegisterSelect";
 
 export default function RegisterCard() {
   return (
@@ -32,6 +33,8 @@ export default function RegisterCard() {
       </h1>
 
       <form className="space-y-6">
+        <RegisterSelect />
+
         <RegisterInput
           type="email"
           placeholder="Email"
