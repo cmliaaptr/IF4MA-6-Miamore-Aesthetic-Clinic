@@ -29,7 +29,7 @@ export default function RegisterSelect() {
           Pilih Role
         </option>
 
-        <option value="user">User</option>
+        <option value="pelanggan">Pelanggan</option>
       </select>
 
       {/* Icon Dropdown */}

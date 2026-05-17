@@ -29,7 +29,7 @@ export default function LoginSelect() {
           Pilih Role
         </option>
 
-        <option value="user">User</option>
+        <option value="pelanggan">Pelanggan</option>
         <option value="dokter">Dokter</option>
         <option value="admin">Admin</option>
       </select>
