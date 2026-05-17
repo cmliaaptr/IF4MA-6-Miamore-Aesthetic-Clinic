@@ -2,31 +2,48 @@ import { ChevronDown } from "lucide-react";
 
 export default function LoginSelect() {
   return (
-    <div
-      className="
-        flex items-center w-full
-        h-12 sm:h-14
-        px-4 sm:px-5
-        rounded-lg
-        bg-white/35 backdrop-blur-xl
-        border border-gray-500/50
-        shadow-inner
-      "
-    >
+    <div className="relative w-full">
       <select
-        defaultValue="User"
+        defaultValue=""
         className="
-          w-full appearance-none bg-transparent outline-none
-          text-gray-800 font-bold text-lg sm:text-2xl
+          w-full
+          h-12 sm:h-14
+          px-4 sm:px-5
+          rounded-xl
+          border border-gray-300
+          bg-white
+          text-gray-600
+          font-bold
+          text-xl
+          outline-none
+          appearance-none
           cursor-pointer
+          shadow-sm
+          focus:border-[#d4af37]
+          focus:ring-2
+          focus:ring-[#d4af37]/30
+          transition
         "
       >
-        <option value="User">User</option>
-        <option value="Dokter">Dokter</option>
-        <option value="Admin">Admin</option>
+        <option value="" disabled>
+          Pilih Role
+        </option>
+
+        <option value="user">User</option>
+        <option value="dokter">Dokter</option>
+        <option value="admin">Admin</option>
       </select>
 
-      <ChevronDown className="w-6 h-6 text-black" />
+      {/* Icon Dropdown */}
+      <ChevronDown
+        className="
+          absolute right-4 top-1/2
+          -translate-y-1/2
+          w-6 h-6
+          text-gray-500
+          pointer-events-none
+        "
+      />
     </div>
   );
 }

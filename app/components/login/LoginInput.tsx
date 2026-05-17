@@ -29,7 +29,7 @@ export default function LoginInput({
         className="
           w-full bg-transparent outline-none
           text-gray-800 placeholder:text-gray-500
-          font-bold text-lg sm:text-2xl
+          font-bold text-base sm:text-xl
         "
       />
 
