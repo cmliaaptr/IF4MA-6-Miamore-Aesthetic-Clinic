@@ -1,10 +1,17 @@
 import { ChevronDown } from "lucide-react";
 
-export default function LoginSelect() {
+type LoginSelectProps = {
+  value: string;
+
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+};
+
+export default function LoginSelect({ value, onChange }: LoginSelectProps) {
   return (
     <div className="relative w-full">
       <select
-        defaultValue=""
+        value={value}
+        onChange={onChange}
         className="
           w-full
           h-12 sm:h-14
@@ -25,16 +32,13 @@ export default function LoginSelect() {
           transition
         "
       >
-        <option value="" disabled>
-          Pilih Role
-        </option>
-
+        <option value="" disabled>Pilih Role</option>
         <option value="pelanggan">Pelanggan</option>
         <option value="dokter">Dokter</option>
         <option value="admin">Admin</option>
       </select>
 
-      {/* Icon Dropdown */}
+      {/* ICON */}
       <ChevronDown
         className="
           absolute right-4 top-1/2

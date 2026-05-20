@@ -1,10 +1,19 @@
 import { ChevronDown } from "lucide-react";
 
-export default function RegisterSelect() {
+type RegisterSelectProps = {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+};
+
+export default function RegisterSelect({
+  value,
+  onChange,
+}: RegisterSelectProps) {
   return (
     <div className="relative w-full">
       <select
-        defaultValue=""
+        value={value}
+        onChange={onChange}
         className="
           w-full
           h-12 sm:h-14
@@ -32,7 +41,6 @@ export default function RegisterSelect() {
         <option value="pelanggan">Pelanggan</option>
       </select>
 
-      {/* Icon Dropdown */}
       <ChevronDown
         className="
           absolute right-4 top-1/2

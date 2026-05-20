@@ -1,8 +1,6 @@
-import { ReactNode } from "react";
+import { ReactNode, InputHTMLAttributes } from "react";
 
-type LoginInputProps = {
-  type: string;
-  placeholder: string;
+type LoginInputProps = InputHTMLAttributes<HTMLInputElement> & {
   icon: ReactNode;
 };
 
@@ -10,6 +8,7 @@ export default function LoginInput({
   type,
   placeholder,
   icon,
+  ...props
 }: LoginInputProps) {
   return (
     <div
@@ -26,6 +25,7 @@ export default function LoginInput({
       <input
         type={type}
         placeholder={placeholder}
+        {...props}
         className="
           w-full bg-transparent outline-none
           text-gray-800 placeholder:text-gray-500

@@ -1,10 +1,125 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Lock, UserCircle } from "lucide-react";
+import toast from "react-hot-toast";
 import LoginInput from "./LoginInput";
 import LoginSelect from "./LoginSelect";
 
 export default function LoginCard() {
+  const router = useRouter();
+
+  // STATE
+  const [role, setRole] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  // HANDLE LOGIN
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // VALIDASI SEMUA KOSONG
+    if (!username && !password) {
+      toast.error("Username dan password wajib diisi");
+
+      return;
+    }
+
+    // VALIDASI USERNAME
+    if (!username) {
+      toast.error("Username wajib diisi");
+
+      return;
+    }
+
+    // VALIDASI PASSWORD
+    if (!password) {
+      toast.error("Password wajib diisi");
+
+      return;
+    }
+
+    try {
+      // FETCH LOGIN API
+      const response = await fetch("http://127.0.0.1:8000/api/login", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+
+        body: JSON.stringify({
+          username,
+          password,
+          role,
+        }),
+      });
+
+      // AMBIL RESPONSE TEXT
+      const text = await response.text();
+
+      // HAPUS // JIKA ADA
+      const cleanText = text.replace(/^\/\//, "").trim();
+
+      let data;
+
+      // CONVERT KE JSON
+      try {
+        data = JSON.parse(cleanText);
+      } catch {
+        data = {
+          message: cleanText,
+        };
+      }
+
+      console.log(data);
+
+      // LOGIN BERHASIL
+      if (response.ok) {
+        toast.success("Login berhasil");
+
+        // VALIDASI USER
+        if (!data.user) {
+          toast.error("Data user tidak ditemukan");
+
+          return;
+        }
+
+        // SIMPAN USER
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        // SIMPAN ROLE
+        localStorage.setItem("role", data.user.role);
+
+        // ROLE ADMIN
+        if (data.user.role === "admin") {
+          router.push("/admin/dashboard");
+        }
+
+        // ROLE DOKTER
+        else if (data.user.role === "dokter") {
+          router.push("/dokter/dashboard");
+        }
+
+        // ROLE PELANGGAN
+        else {
+          router.push("/landingpage");
+        }
+      } else {
+        // ERROR BACKEND
+        toast.error(data.message || "Login gagal");
+      }
+    } catch (error) {
+      console.log(error);
+
+      toast.error("Tidak bisa terhubung ke server");
+    }
+  };
+
   return (
     <section
       className="
@@ -17,10 +132,10 @@ export default function LoginCard() {
         py-6
       "
     >
-      {/* Logo */}
+      {/* LOGO */}
       <div className="flex flex-col items-center mb-5">
         <Image
-          src="/images/Logo.png"
+          src="/images/logo.png"
           alt="Miamore Logo"
           width={130}
           height={130}
@@ -33,27 +148,34 @@ export default function LoginCard() {
         </h1>
       </div>
 
-      {/* Form */}
-      <form className="space-y-4">
-        <LoginSelect />
+      {/* FORM */}
+      <form onSubmit={handleLogin} className="space-y-4">
+        {/* ROLE */}
+        <LoginSelect value={role} onChange={(e) => setRole(e.target.value)} />
 
+        {/* USERNAME */}
         <LoginInput
           type="text"
           placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           icon={<UserCircle className="w-5 h-5 text-gray-500" />}
         />
 
+        {/* PASSWORD */}
         <LoginInput
           type="password"
           placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           icon={<Lock className="w-5 h-5 text-gray-500" />}
         />
 
-        <Link
-          href="/landingpage"
+        {/* BUTTON LOGIN */}
+        <button
+          type="submit"
           className="
             w-full h-12
-            flex items-center justify-center
             rounded-xl
             bg-[#d4af37]
             hover:bg-[#c49b24]
@@ -65,13 +187,18 @@ export default function LoginCard() {
           "
         >
           Login
-        </Link>
+        </button>
 
+        {/* LINK REGISTER */}
         <p className="text-center text-sm text-gray-500">
           Belum punya akun?{" "}
           <Link
             href="/"
-            className="font-semibold text-[#d4af37] hover:underline"
+            className="
+              font-semibold
+              text-[#d4af37]
+              hover:underline
+            "
           >
             Daftar disini
           </Link>

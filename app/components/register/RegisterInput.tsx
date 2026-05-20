@@ -4,12 +4,16 @@ type RegisterInputProps = {
   type: string;
   placeholder: string;
   icon: ReactNode;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 export default function RegisterInput({
   type,
   placeholder,
   icon,
+  value,
+  onChange,
 }: RegisterInputProps) {
   return (
     <div
@@ -26,6 +30,8 @@ export default function RegisterInput({
       <input
         type={type}
         placeholder={placeholder}
+        value={value}
+        onChange={onChange}
         className="
           w-full bg-transparent outline-none
           text-gray-800 placeholder:text-gray-500
