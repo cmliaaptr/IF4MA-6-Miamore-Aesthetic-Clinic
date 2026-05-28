@@ -62,16 +62,16 @@
 }
 
 .sidebar-logo {
-  width: 48px;
-  height: 48px;
+  width: 200px;
+  height: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .sidebar-logo-image {
-  width: 600%;
-  height: 100%;
+  width: 200%;
+  height: 200%;
   object-fit: contain;
 }
 
@@ -116,7 +116,7 @@
 
 .sidebar-footer {
   margin-top: auto;
-  padding-top: 20px;
+  padding-top: 50px;
 }
 
 .logout-item {

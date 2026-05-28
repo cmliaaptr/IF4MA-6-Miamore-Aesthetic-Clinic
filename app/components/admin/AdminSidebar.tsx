@@ -45,15 +45,12 @@ export default function AdminSidebar() {
         <div className="sidebar-brand">
           <div className="sidebar-logo">
             <Image
-              src="/logo.png"
+              src="/images/logo.png"
               alt="Miamore Logo"
-              width={40}
-              height={40}
+              width={200}
+              height={120}
               className="sidebar-logo-image"
             />
-          </div>
-          <div>
-            <h2>Miamore Aesthetic Clinic</h2>
           </div>
         </div>
 
