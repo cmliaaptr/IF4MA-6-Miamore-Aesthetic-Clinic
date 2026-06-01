@@ -1,113 +1,256 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import DoctorScheduleTable from "../../components/admin/DoctorScheduleTable";
 import DoctorScheduleFormModal from "../../components/admin/DoctorScheduleFormModal";
 import DeleteConfirmModal from "../../components/admin/DeleteConfirmModal";
 import SuccessModal from "../../components/admin/SuccessModal";
-import { doctorScheduleList as initialDoctorScheduleList } from "@/data/dashboard";
 import type { DoctorScheduleItem } from "@/types/dashboard";
 
 type DoctorScheduleFormData = {
-  doctorName: string;
+  doctorId: number;
   day: string;
   startTime: string;
   endTime: string;
+  capacityPerHour: number;
 };
 
 export default function JadwalDokterPage() {
-  const [schedules, setSchedules] = useState<DoctorScheduleItem[]>(
-    initialDoctorScheduleList
-  );
+  const [schedules, setSchedules] = useState<
+    DoctorScheduleItem[]
+  >([]);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
 
-  const [successMessage, setSuccessMessage] = useState("");
+  const [successMessage, setSuccessMessage] =
+    useState("");
+
   const [selectedSchedule, setSelectedSchedule] =
     useState<DoctorScheduleItem | null>(null);
 
-  const handleOpenAddModal = () => {
-    setIsAddOpen(true);
+  // ==========================
+  // GET ALL DATA
+  // ==========================
+
+  const fetchSchedules = async () => {
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/jadwal-dokter"
+      );
+
+      const result = await response.json();
+
+      setSchedules(
+        result.data.map((item: any) => ({
+          id: item.id_jadwal,
+          doctorId: item.id_dokter,
+          doctorName:
+            item.dokter?.username ?? "-",
+          day: item.hari,
+          startTime: item.jam_mulai,
+          endTime: item.jam_selesai,
+          capacityPerHour:
+            item.kapasitas,
+        }))
+      );
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const handleAddSchedule = (data: DoctorScheduleFormData) => {
-    const newSchedule: DoctorScheduleItem = {
-      id: Date.now(),
-      doctorName: data.doctorName,
-      day: data.day,
-      startTime: data.startTime,
-      endTime: data.endTime,
-      capacityPerHour: 3,
-    };
+  useEffect(() => {
+    fetchSchedules();
+  }, []);
 
-    setSchedules((prev) => [...prev, newSchedule]);
-    setIsAddOpen(false);
+  // ==========================
+  // ADD
+  // ==========================
 
-    setSuccessMessage("Jadwal dokter berhasil ditambahkan.");
-    setIsSuccessOpen(true);
+  const handleAddSchedule = async (
+    data: DoctorScheduleFormData
+  ) => {
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/jadwal-dokter",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+            Accept: "application/json",
+          },
+
+          body: JSON.stringify({
+            id_dokter: data.doctorId,
+            hari: data.day,
+            jam_mulai:
+              data.startTime,
+            jam_selesai:
+              data.endTime,
+            kapasitas:
+              data.capacityPerHour,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "Gagal menambah jadwal"
+        );
+      }
+
+      await fetchSchedules();
+
+      setIsAddOpen(false);
+
+      setSuccessMessage(
+        "Jadwal dokter berhasil ditambahkan."
+      );
+
+      setIsSuccessOpen(true);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const handleOpenEditModal = (item: DoctorScheduleItem) => {
+  // ==========================
+  // OPEN EDIT
+  // ==========================
+
+  const handleOpenEditModal = (
+    item: DoctorScheduleItem
+  ) => {
     setSelectedSchedule(item);
     setIsEditOpen(true);
   };
 
-  const handleEditSchedule = (data: DoctorScheduleFormData) => {
+  // ==========================
+  // UPDATE
+  // ==========================
+
+  const handleEditSchedule = async (
+    data: DoctorScheduleFormData
+  ) => {
     if (!selectedSchedule) return;
 
-    setSchedules((prev) =>
-      prev.map((item) =>
-        item.id === selectedSchedule.id
-          ? {
-              ...item,
-              doctorName: data.doctorName,
-              day: data.day,
-              startTime: data.startTime,
-              endTime: data.endTime,
-            }
-          : item
-      )
-    );
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/jadwal-dokter/${selectedSchedule.id}`,
+        {
+          method: "PUT",
 
-    setIsEditOpen(false);
-    setSelectedSchedule(null);
+          headers: {
+            "Content-Type":
+              "application/json",
+            Accept: "application/json",
+          },
 
-    setSuccessMessage("Jadwal dokter berhasil diubah.");
-    setIsSuccessOpen(true);
+          body: JSON.stringify({
+            id_dokter: data.doctorId,
+            hari: data.day,
+            jam_mulai:
+              data.startTime,
+            jam_selesai:
+              data.endTime,
+            kapasitas:
+              data.capacityPerHour,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "Gagal mengubah jadwal"
+        );
+      }
+
+      await fetchSchedules();
+
+      setIsEditOpen(false);
+
+      setSelectedSchedule(null);
+
+      setSuccessMessage(
+        "Jadwal dokter berhasil diubah."
+      );
+
+      setIsSuccessOpen(true);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const handleOpenDeleteModal = (item: DoctorScheduleItem) => {
+  // ==========================
+  // OPEN DELETE
+  // ==========================
+
+  const handleOpenDeleteModal = (
+    item: DoctorScheduleItem
+  ) => {
     setSelectedSchedule(item);
     setIsDeleteOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (!selectedSchedule) return;
+  // ==========================
+  // DELETE
+  // ==========================
 
-    setSchedules((prev) =>
-      prev.filter((item) => item.id !== selectedSchedule.id)
-    );
+  const handleConfirmDelete =
+    async () => {
+      if (!selectedSchedule)
+        return;
 
-    setIsDeleteOpen(false);
-    setSelectedSchedule(null);
+      try {
+        const response =
+          await fetch(
+            `http://127.0.0.1:8000/api/jadwal-dokter/${selectedSchedule.id}`,
+            {
+              method: "DELETE",
+            }
+          );
 
-    setSuccessMessage("Jadwal dokter berhasil dihapus.");
-    setIsSuccessOpen(true);
-  };
+        if (!response.ok) {
+          throw new Error(
+            "Gagal menghapus jadwal"
+          );
+        }
+
+        await fetchSchedules();
+
+        setIsDeleteOpen(false);
+
+        setSelectedSchedule(
+          null
+        );
+
+        setSuccessMessage(
+          "Jadwal dokter berhasil dihapus."
+        );
+
+        setIsSuccessOpen(true);
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
   return (
     <section>
-      <h1 className="page-title">Jadwal Dokter</h1>
+      <h1 className="page-title">
+        Jadwal Dokter
+      </h1>
 
       <div className="page-action">
         <button
           type="button"
           className="add-button"
-          onClick={handleOpenAddModal}
+          onClick={() =>
+            setIsAddOpen(true)
+          }
         >
           <Plus size={16} />
           <span>Tambah</span>
@@ -116,41 +259,65 @@ export default function JadwalDokterPage() {
 
       <DoctorScheduleTable
         data={schedules}
-        onEdit={handleOpenEditModal}
-        onDelete={handleOpenDeleteModal}
+        onEdit={
+          handleOpenEditModal
+        }
+        onDelete={
+          handleOpenDeleteModal
+        }
       />
 
       <DoctorScheduleFormModal
         isOpen={isAddOpen}
         mode="add"
-        onClose={() => setIsAddOpen(false)}
-        onSubmit={handleAddSchedule}
+        onClose={() =>
+          setIsAddOpen(false)
+        }
+        onSubmit={
+          handleAddSchedule
+        }
       />
 
       <DoctorScheduleFormModal
         isOpen={isEditOpen}
         mode="edit"
-        initialData={selectedSchedule}
+        initialData={
+          selectedSchedule
+        }
         onClose={() => {
           setIsEditOpen(false);
-          setSelectedSchedule(null);
+          setSelectedSchedule(
+            null
+          );
         }}
-        onSubmit={handleEditSchedule}
+        onSubmit={
+          handleEditSchedule
+        }
       />
 
       <DeleteConfirmModal
         isOpen={isDeleteOpen}
         onClose={() => {
           setIsDeleteOpen(false);
-          setSelectedSchedule(null);
+          setSelectedSchedule(
+            null
+          );
         }}
-        onConfirm={handleConfirmDelete}
+        onConfirm={
+          handleConfirmDelete
+        }
       />
 
       <SuccessModal
-        isOpen={isSuccessOpen}
-        onClose={() => setIsSuccessOpen(false)}
-        message={successMessage}
+        isOpen={
+          isSuccessOpen
+        }
+        onClose={() =>
+          setIsSuccessOpen(false)
+        }
+        message={
+          successMessage
+        }
       />
     </section>
   );
