@@ -95,9 +95,16 @@ export default function LoginCard() {
         // SIMPAN ROLE
         localStorage.setItem("role", data.user.role);
 
+        // SET COOKIE ROLE (middleware membaca cookie ini)
+        try {
+          document.cookie = `role=${data.user.role}; path=/; max-age=${60 * 60 * 24 * 7}`;
+        } catch (e) {
+          console.warn("Gagal menyimpan cookie role", e);
+        }
+
         // ROLE ADMIN
         if (data.user.role === "admin") {
-          router.push("/admin/dashboard");
+          router.push("/admin");
         }
 
         // ROLE DOKTER

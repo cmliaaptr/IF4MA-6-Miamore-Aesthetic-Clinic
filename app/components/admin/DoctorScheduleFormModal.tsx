@@ -1,14 +1,21 @@
 "use client";
 
 import { ChangeEvent, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import Modal from "./Modal";
 import type { DoctorScheduleItem } from "@/types/dashboard";
 
+type Doctor = {
+  id_user: number;
+  username: string;
+};
+
 type DoctorScheduleFormData = {
-  doctorName: string;
+  doctorId: number;
   day: string;
   startTime: string;
   endTime: string;
+  capacityPerHour: number;
 };
 
 type DoctorScheduleFormModalProps = {
@@ -20,10 +27,11 @@ type DoctorScheduleFormModalProps = {
 };
 
 const initialFormValue: DoctorScheduleFormData = {
-  doctorName: "",
+  doctorId: 0,
   day: "",
   startTime: "",
   endTime: "",
+  capacityPerHour: 3,
 };
 
 export default function DoctorScheduleFormModal({
@@ -34,45 +42,170 @@ export default function DoctorScheduleFormModal({
   onSubmit,
 }: DoctorScheduleFormModalProps) {
   const [formData, setFormData] =
-    useState<DoctorScheduleFormData>(initialFormValue);
+    useState<DoctorScheduleFormData>(
+      initialFormValue
+    );
+
+  const [doctors, setDoctors] =
+    useState<Doctor[]>([]);
+
+  // =====================
+  // FETCH DOCTORS
+  // =====================
+
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
+
+  const fetchDoctors = async () => {
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/dokter"
+      );
+
+      const result =
+        await response.json();
+
+      setDoctors(result.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // =====================
+  // SET EDIT DATA
+  // =====================
 
   useEffect(() => {
     if (mode === "edit" && initialData) {
       setFormData({
-        doctorName: initialData.doctorName,
+        doctorId:
+          initialData.doctorId,
         day: initialData.day,
-        startTime: initialData.startTime,
-        endTime: initialData.endTime,
+        startTime:
+          initialData.startTime,
+        endTime:
+          initialData.endTime,
+        capacityPerHour:
+          initialData.capacityPerHour,
       });
     } else {
-      setFormData(initialFormValue);
+      setFormData(
+        initialFormValue
+      );
     }
-  }, [mode, initialData, isOpen]);
+  }, [
+    mode,
+    initialData,
+    isOpen,
+  ]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  // =====================
+  // HANDLE CHANGE
+  // =====================
+
+  const handleChange = (
+    e: ChangeEvent<
+      HTMLInputElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } =
+      e.target;
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+
+      [name]:
+        name === "doctorId" ||
+        name ===
+          "capacityPerHour"
+          ? Number(value)
+          : value,
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // =====================
+  // VALIDATION
+  // =====================
+
+  const handleSubmit = (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
+
+    if (
+      formData.doctorId === 0
+    ) {
+      toast.error(
+        "Pilih dokter terlebih dahulu"
+      );
+      return;
+    }
+
+    if (
+      !formData.day.trim()
+    ) {
+      toast.error(
+        "Hari wajib diisi"
+      );
+      return;
+    }
+
+    if (
+      !formData.startTime
+    ) {
+      toast.error(
+        "Jam mulai wajib diisi"
+      );
+      return;
+    }
+
+    if (
+      !formData.endTime
+    ) {
+      toast.error(
+        "Jam selesai wajib diisi"
+      );
+      return;
+    }
+
+    if (
+      formData.capacityPerHour <=
+      0
+    ) {
+      toast.error(
+        "Kapasitas harus lebih dari 0"
+      );
+      return;
+    }
+
     onSubmit(formData);
   };
 
+  // =====================
+  // RESET
+  // =====================
+
   const handleReset = () => {
-    if (mode === "edit" && initialData) {
+    if (
+      mode === "edit" &&
+      initialData
+    ) {
       setFormData({
-        doctorName: initialData.doctorName,
+        doctorId:
+          initialData.doctorId,
         day: initialData.day,
-        startTime: initialData.startTime,
-        endTime: initialData.endTime,
+        startTime:
+          initialData.startTime,
+        endTime:
+          initialData.endTime,
+        capacityPerHour:
+          initialData.capacityPerHour,
       });
     } else {
-      setFormData(initialFormValue);
+      setFormData(
+        initialFormValue
+      );
     }
   };
 
@@ -80,51 +213,126 @@ export default function DoctorScheduleFormModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={mode === "add" ? "Tambah Jadwal Dokter" : "Edit Jadwal Dokter"}
+      title={
+        mode === "add"
+          ? "Tambah Jadwal Dokter"
+          : "Edit Jadwal Dokter"
+      }
       width="640px"
     >
-      <form onSubmit={handleSubmit} className="treatment-form">
+      <form
+        onSubmit={
+          handleSubmit
+        }
+        className="treatment-form"
+      >
+        {/* DOKTER */}
         <div className="form-group">
-          <label htmlFor="doctorName">Nama Dokter</label>
-          <input
-            id="doctorName"
-            name="doctorName"
-            type="text"
-            value={formData.doctorName}
-            onChange={handleChange}
-          />
+          <label>
+            Dokter
+          </label>
+
+          <select
+            name="doctorId"
+            value={
+              formData.doctorId
+            }
+            onChange={
+              handleChange
+            }
+          >
+            <option value={0}>
+              Pilih Dokter
+            </option>
+
+            {doctors.map(
+              (doctor) => (
+                <option
+                  key={
+                    doctor.id_user
+                  }
+                  value={
+                    doctor.id_user
+                  }
+                >
+                  {
+                    doctor.username
+                  }
+                </option>
+              )
+            )}
+          </select>
         </div>
 
+        {/* HARI */}
         <div className="form-group">
-          <label htmlFor="day">Hari</label>
+          <label>
+            Hari
+          </label>
+
           <input
-            id="day"
             name="day"
-            type="text"
-            value={formData.day}
-            onChange={handleChange}
+            value={
+              formData.day
+            }
+            onChange={
+              handleChange
+            }
           />
         </div>
 
+        {/* JAM MULAI */}
         <div className="form-group">
-          <label htmlFor="startTime">Jam Mulai</label>
+          <label>
+            Jam Mulai
+          </label>
+
           <input
-            id="startTime"
+            type="time"
             name="startTime"
-            type="text"
-            value={formData.startTime}
-            onChange={handleChange}
+            value={
+              formData.startTime
+            }
+            onChange={
+              handleChange
+            }
           />
         </div>
 
+        {/* JAM SELESAI */}
         <div className="form-group">
-          <label htmlFor="endTime">Jam Selesai</label>
+          <label>
+            Jam Selesai
+          </label>
+
           <input
-            id="endTime"
+            type="time"
             name="endTime"
-            type="text"
-            value={formData.endTime}
-            onChange={handleChange}
+            value={
+              formData.endTime
+            }
+            onChange={
+              handleChange
+            }
+          />
+        </div>
+
+        {/* KAPASITAS */}
+        <div className="form-group">
+          <label>
+            Kapasitas /
+            Jam
+          </label>
+
+          <input
+            type="number"
+            name="capacityPerHour"
+            value={
+              formData.capacityPerHour
+            }
+            onChange={
+              handleChange
+            }
           />
         </div>
 
@@ -132,16 +340,24 @@ export default function DoctorScheduleFormModal({
           <button
             type="button"
             className="reset-button"
-            onClick={handleReset}
+            onClick={
+              handleReset
+            }
           >
             Reset
           </button>
 
           <button
             type="submit"
-            className={mode === "add" ? "save-button" : "edit-submit-button"}
+            className={
+              mode === "add"
+                ? "save-button"
+                : "edit-submit-button"
+            }
           >
-            {mode === "add" ? "Simpan" : "Edit"}
+            {mode === "add"
+              ? "Simpan"
+              : "Edit"}
           </button>
         </div>
       </form>

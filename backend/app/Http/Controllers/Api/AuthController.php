@@ -89,4 +89,14 @@ class AuthController extends Controller
             ],
         ]);
     }
+
+    public function getDoctors()
+    {
+        $dokter = User::where('role', 'dokter')
+            ->get();
+
+        return response()->json([
+            'data' => $dokter
+        ]);
+    }
 }

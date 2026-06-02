@@ -1,16 +1,17 @@
 "use client";
 
 import { ChangeEvent, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import Modal from "./Modal";
 import type { TreatmentItem } from "@/types/dashboard";
 
 type TreatmentFormData = {
-  name: string;
-  price: string;
-  discount: string;
-  duration: string;
-  photo: string;
-  description: string;
+  nama_treatment: string;
+  harga: string;
+  diskon: string;
+  durasi: string;
+  foto: string;
+  deskripsi: string;
 };
 
 type TreatmentFormModalProps = {
@@ -22,12 +23,12 @@ type TreatmentFormModalProps = {
 };
 
 const initialFormValue: TreatmentFormData = {
-  name: "",
-  price: "",
-  discount: "",
-  duration: "",
-  photo: "",
-  description: "",
+  nama_treatment: "",
+  harga: "",
+  diskon: "",
+  durasi: "",
+  foto: "",
+  deskripsi: "",
 };
 
 export default function TreatmentFormModal({
@@ -37,17 +38,18 @@ export default function TreatmentFormModal({
   onClose,
   onSubmit,
 }: TreatmentFormModalProps) {
-  const [formData, setFormData] = useState<TreatmentFormData>(initialFormValue);
+  const [formData, setFormData] =
+    useState<TreatmentFormData>(initialFormValue);
 
   useEffect(() => {
     if (mode === "edit" && initialData) {
       setFormData({
-        name: initialData.name,
-        price: initialData.price,
-        discount: initialData.discount,
-        duration: initialData.duration,
-        photo: initialData.photo,
-        description: initialData.description,
+        nama_treatment: initialData.name,
+        harga: String(initialData.price),
+        diskon: String(initialData.discount),
+        durasi: String(initialData.duration),
+        foto: initialData.photo,
+        deskripsi: initialData.description,
       });
     } else {
       setFormData(initialFormValue);
@@ -55,7 +57,9 @@ export default function TreatmentFormModal({
   }, [mode, initialData, isOpen]);
 
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement
+    >
   ) => {
     const { name, value } = e.target;
 
@@ -65,105 +69,204 @@ export default function TreatmentFormModal({
     }));
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (
+    e: ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
 
     if (file) {
       setFormData((prev) => ({
         ...prev,
-        photo: file.name,
+        foto: file.name,
       }));
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
+
+    // VALIDASI
+    if (!formData.nama_treatment.trim()) {
+      toast.error(
+        "Nama treatment wajib diisi"
+      );
+      return;
+    }
+
+    if (!formData.harga.trim()) {
+      toast.error(
+        "Harga wajib diisi"
+      );
+      return;
+    }
+
+    if (!formData.diskon.trim()) {
+      toast.error(
+        "Diskon wajib diisi"
+      );
+      return;
+    }
+
+    if (!formData.durasi.trim()) {
+      toast.error(
+        "Durasi wajib diisi"
+      );
+      return;
+    }
+
+    if (!formData.foto.trim()) {
+      toast.error(
+        "Foto treatment wajib diupload"
+      );
+      return;
+    }
+
+    if (!formData.deskripsi.trim()) {
+      toast.error(
+        "Deskripsi wajib diisi"
+      );
+      return;
+    }
+
     onSubmit(formData);
+  };
+
+  const handleReset = () => {
+    setFormData(initialFormValue);
+
+    toast.success(
+      "Form berhasil direset"
+    );
   };
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={mode === "add" ? "Tambah Treatment" : "Edit Treatment"}
+      title={
+        mode === "add"
+          ? "Tambah Treatment"
+          : "Edit Treatment"
+      }
       width="640px"
     >
-      <form onSubmit={handleSubmit} className="treatment-form">
+      <form
+        onSubmit={handleSubmit}
+        className="treatment-form"
+      >
+        {/* Nama Treatment */}
         <div className="form-group">
-          <label htmlFor="name">Nama Treatment</label>
+          <label htmlFor="nama_treatment">
+            Nama Treatment
+          </label>
+
           <input
-            id="name"
-            name="name"
+            id="nama_treatment"
+            name="nama_treatment"
             type="text"
-            value={formData.name}
+            value={formData.nama_treatment}
             onChange={handleChange}
           />
         </div>
 
+        {/* Harga */}
         <div className="form-group">
-          <label htmlFor="price">Harga</label>
+          <label htmlFor="harga">
+            Harga
+          </label>
+
           <input
-            id="price"
-            name="price"
-            type="text"
-            value={formData.price}
+            id="harga"
+            name="harga"
+            type="number"
+            value={formData.harga}
             onChange={handleChange}
           />
         </div>
 
+        {/* Diskon */}
         <div className="form-group">
-          <label htmlFor="discount">Diskon</label>
+          <label htmlFor="diskon">
+            Diskon (%)
+          </label>
+
           <input
-            id="discount"
-            name="discount"
-            type="text"
-            value={formData.discount}
+            id="diskon"
+            name="diskon"
+            type="number"
+            value={formData.diskon}
             onChange={handleChange}
           />
         </div>
 
+        {/* Durasi */}
         <div className="form-group">
-          <label htmlFor="duration">Durasi</label>
+          <label htmlFor="durasi">
+            Durasi (Menit)
+          </label>
+
           <input
-            id="duration"
-            name="duration"
-            type="text"
-            value={formData.duration}
+            id="durasi"
+            name="durasi"
+            type="number"
+            value={formData.durasi}
             onChange={handleChange}
           />
         </div>
 
+        {/* Foto */}
         <div className="form-group">
-          <label htmlFor="photo">Foto</label>
+          <label htmlFor="foto">
+            Foto
+          </label>
+
           <input
-            id="photo"
-            name="photo"
+            id="foto"
+            name="foto"
             type="file"
             onChange={handleFileChange}
           />
+
+          {formData.foto && (
+            <small>
+              File dipilih:
+              {" "}
+              {formData.foto}
+            </small>
+          )}
         </div>
 
+        {/* Deskripsi */}
         <div className="form-group">
-          <label htmlFor="description">Deskripsi</label>
+          <label htmlFor="deskripsi">
+            Deskripsi
+          </label>
+
           <textarea
-            id="description"
-            name="description"
+            id="deskripsi"
+            name="deskripsi"
             rows={5}
-            value={formData.description}
+            value={formData.deskripsi}
             onChange={handleChange}
           />
         </div>
 
+        {/* Footer */}
         <div className="modal-footer">
           <button
             type="button"
             className="reset-button"
-            onClick={() => setFormData(initialFormValue)}
+            onClick={handleReset}
           >
             Reset
           </button>
 
-          <button type="submit" className="save-button">
+          <button
+            type="submit"
+            className="save-button"
+          >
             Simpan
           </button>
         </div>
