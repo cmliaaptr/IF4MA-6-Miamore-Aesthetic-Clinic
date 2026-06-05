@@ -11,7 +11,7 @@ class JadwalDokter extends Model
     protected $primaryKey = 'id_jadwal';
 
     protected $fillable = [
-        'id_dokter',
+        'nama_dokter',
         'hari',
         'jam_mulai',
         'jam_selesai',
