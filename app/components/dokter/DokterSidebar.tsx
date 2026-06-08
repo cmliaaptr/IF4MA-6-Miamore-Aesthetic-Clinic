@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { BookOpenText, CalendarDays, LayoutDashboard, LogOut } from "lucide-react";
 
@@ -15,6 +16,17 @@ export default function DokterSidebar() {
 
   return (
     <aside className="hidden w-[272px] shrink-0 border-r border-[#efd487] bg-white md:flex md:flex-col">
+      <div className="flex h-32 items-center justify-center">
+        <Image
+          src="/images/logo.png"
+          alt="Miamore Aesthetic Clinic"
+          width={112}
+          height={82}
+          priority
+          className="h-auto w-28 object-contain"
+        />
+      </div>
+
       <nav className="flex flex-1 flex-col gap-2 px-9 py-9">
         {menuItems.map((item) => {
           const Icon = item.icon;
