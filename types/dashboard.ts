@@ -33,7 +33,6 @@ export type CustomerItem = {
 
 export type DoctorScheduleItem = {
   id: number;
-  doctorId: number;
   doctorName: string;
   day: string;
   startTime: string;

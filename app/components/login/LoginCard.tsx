@@ -109,7 +109,7 @@ export default function LoginCard() {
 
         // ROLE DOKTER
         else if (data.user.role === "dokter") {
-          router.push("/dokter/dashboard");
+          router.push("/dokter");
         }
 
         // ROLE PELANGGAN

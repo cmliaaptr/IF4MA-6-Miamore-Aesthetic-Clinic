@@ -10,27 +10,24 @@ class JadwalDokterController extends Controller
 {
     public function index()
     {
-        $jadwal = JadwalDokter::with('dokter')
-            ->get();
-
         return response()->json([
             'message' => 'Data jadwal dokter berhasil diambil',
-            'data' => $jadwal
+            'data' => JadwalDokter::all()
         ]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'id_dokter' => 'required',
-            'hari' => 'required',
+            'nama_dokter' => 'required|string|max:255',
+            'hari' => 'required|string|max:50',
             'jam_mulai' => 'required',
             'jam_selesai' => 'required',
-            'kapasitas' => 'required'
+            'kapasitas' => 'required|integer',
         ]);
 
         $jadwal = JadwalDokter::create([
-            'id_dokter' => $request->id_dokter,
+            'nama_dokter' => $request->nama_dokter,
             'hari' => $request->hari,
             'jam_mulai' => $request->jam_mulai,
             'jam_selesai' => $request->jam_selesai,
@@ -45,12 +42,11 @@ class JadwalDokterController extends Controller
 
     public function show($id)
     {
-        $jadwal = JadwalDokter::with('dokter')
-            ->find($id);
+        $jadwal = JadwalDokter::find($id);
 
         if (!$jadwal) {
             return response()->json([
-                'message' => 'Jadwal tidak ditemukan'
+                'message' => 'Data tidak ditemukan'
             ], 404);
         }
 
@@ -65,12 +61,20 @@ class JadwalDokterController extends Controller
 
         if (!$jadwal) {
             return response()->json([
-                'message' => 'Jadwal tidak ditemukan'
+                'message' => 'Data tidak ditemukan'
             ], 404);
         }
 
+        $request->validate([
+            'nama_dokter' => 'required|string|max:255',
+            'hari' => 'required|string|max:50',
+            'jam_mulai' => 'required',
+            'jam_selesai' => 'required',
+            'kapasitas' => 'required|integer',
+        ]);
+
         $jadwal->update([
-            'id_dokter' => $request->id_dokter,
+            'nama_dokter' => $request->nama_dokter,
             'hari' => $request->hari,
             'jam_mulai' => $request->jam_mulai,
             'jam_selesai' => $request->jam_selesai,
@@ -78,7 +82,7 @@ class JadwalDokterController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Jadwal dokter berhasil diupdate',
+            'message' => 'Jadwal dokter berhasil diubah',
             'data' => $jadwal
         ]);
     }
@@ -89,7 +93,7 @@ class JadwalDokterController extends Controller
 
         if (!$jadwal) {
             return response()->json([
-                'message' => 'Jadwal tidak ditemukan'
+                'message' => 'Data tidak ditemukan'
             ], 404);
         }
 
