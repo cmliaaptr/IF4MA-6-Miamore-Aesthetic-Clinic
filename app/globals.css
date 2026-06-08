@@ -46,21 +46,21 @@
 
 .booking-label {
   display: block;
-  margin-bottom: 0.75rem;
-  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin-bottom: 0.35rem;
+  font-size: clamp(0.92rem, 1.5vw, 1.05rem);
   font-weight: 500;
   line-height: 1.2;
 }
 
 .booking-input {
   width: 100%;
-  min-height: 4.5rem;
+  min-height: 2.65rem;
   border: 1px solid #b8b8b8;
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   background: #ffffff;
-  padding: 0 1.25rem;
+  padding: 0 0.85rem;
   color: #111111;
-  font-size: clamp(1.25rem, 2.5vw, 1.85rem);
+  font-size: clamp(0.9rem, 1.4vw, 1rem);
   outline: none;
 }
 

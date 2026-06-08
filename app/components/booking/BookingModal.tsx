@@ -197,9 +197,9 @@ export default function BookingModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 px-4 py-6">
-      <div className="mx-auto min-h-full w-full max-w-4xl">
-        <div className="relative rounded-[28px] bg-white p-5 text-neutral-950 shadow-2xl sm:p-8 lg:p-10">
+    <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/60 px-3 py-4">
+      <div className="mx-auto min-h-full w-full max-w-2xl">
+        <div className="relative rounded-2xl bg-white p-4 text-neutral-950 shadow-2xl sm:p-5">
           <button
             type="button"
             onClick={handleClose}
@@ -210,23 +210,23 @@ export default function BookingModal({
           </button>
 
           {step === "form" && (
-            <form onSubmit={handleSubmitBooking} className="space-y-9">
+            <form onSubmit={handleSubmitBooking} className="space-y-4">
               <header>
-                <h2 className="text-4xl font-bold text-[#bf9130] md:text-5xl">
+                <h2 className="text-2xl font-bold text-[#bf9130] md:text-3xl">
                   Booking Treatment
                 </h2>
-                <p className="mt-2 text-lg font-medium md:text-2xl">
+                <p className="mt-1 text-sm font-medium md:text-base">
                   Lengkapi informasi dibawah untuk memesan jadwal anda
                 </p>
               </header>
 
-              <FormSection icon={<User size={24} />} title="DATA DIRI">
-                <div className="grid gap-6 md:grid-cols-2">
+              <FormSection icon={<User size={18} />} title="DATA DIRI">
+                <div className="grid gap-3 md:grid-cols-2">
                   <TextField label="Nama Lengkap" name="fullName" value={formData.fullName} onChange={handleChange} />
                   <TextField label="Tanggal Lahir" name="birthDate" type="date" value={formData.birthDate} onChange={handleChange} />
                   <div>
                     <label className="booking-label">Jenis Kelamin</label>
-                    <div className="mt-5 flex flex-wrap gap-5 text-sm text-neutral-600">
+                    <div className="mt-2 flex flex-wrap gap-3 text-xs text-neutral-600">
                       {["Perempuan", "Laki - Laki"].map((gender) => (
                         <label key={gender} className="flex items-center gap-2">
                           <input
@@ -235,7 +235,7 @@ export default function BookingModal({
                             value={gender}
                             checked={formData.gender === gender}
                             onChange={handleChange}
-                            className="h-5 w-5 accent-[#bf9130]"
+                            className="h-4 w-4 accent-[#bf9130]"
                           />
                           {gender}
                         </label>
@@ -248,8 +248,8 @@ export default function BookingModal({
                 </div>
               </FormSection>
 
-              <FormSection icon={<CalendarDays size={24} />} title="DETAIL BOOKING">
-                <div className="grid gap-6 md:grid-cols-2">
+              <FormSection icon={<CalendarDays size={18} />} title="DETAIL BOOKING">
+                <div className="grid gap-3 md:grid-cols-2">
                   <TextField label="Tanggal Booking" name="bookingDate" type="date" value={formData.bookingDate} onChange={handleChange} />
                   <SelectField label="Waktu Booking" name="bookingTime" value={formData.bookingTime} onChange={handleChange} options={timeOptions} placeholder="Pilih waktu" />
                 </div>
@@ -257,13 +257,13 @@ export default function BookingModal({
                 <SelectField label="Dokter / Terapis (Opsional)" name="therapist" value={formData.therapist} onChange={handleChange} options={therapistOptions} placeholder="Pilih Dokter / Terapis" />
               </FormSection>
 
-              <FormSection icon={<MessageCircle size={24} />} title="CATATAN TAMBAHAN">
+              <FormSection icon={<MessageCircle size={18} />} title="CATATAN TAMBAHAN">
                 <textarea
                   name="notes"
                   value={formData.notes}
                   onChange={handleChange}
                   placeholder="Tuliskan keluhan kulit atau catatan khusus (opsional)"
-                  className="min-h-36 w-full rounded-2xl border border-neutral-300 px-5 py-4 text-lg outline-none focus:border-[#bf9130]"
+                  className="min-h-20 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-[#bf9130]"
                 />
               </FormSection>
 
@@ -272,7 +272,7 @@ export default function BookingModal({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full rounded-full bg-[#17a900] px-6 py-5 text-2xl font-bold text-white hover:bg-[#148f00] disabled:cursor-not-allowed disabled:bg-neutral-400 md:text-4xl"
+                className="w-full rounded-full bg-[#17a900] px-5 py-3 text-lg font-bold text-white hover:bg-[#148f00] disabled:cursor-not-allowed disabled:bg-neutral-400 md:text-xl"
               >
                 {isSubmitting ? "Memproses..." : "Lanjut ke Pembayaran ->"}
               </button>
@@ -317,11 +317,11 @@ function FormSection({
 }) {
   return (
     <section className="border-t border-neutral-300 pt-8 first:border-t-0 first:pt-0">
-      <div className="mb-7 inline-flex items-center gap-3 rounded-full bg-[#d0ad5d] px-6 py-3 text-xl font-bold text-white md:text-2xl">
+      <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#d0ad5d] px-4 py-2 text-sm font-bold text-white md:text-base">
         <span className="text-neutral-900">{icon}</span>
         {title}
       </div>
-      <div className="space-y-6">{children}</div>
+      <div className="space-y-3">{children}</div>
     </section>
   );
 }
@@ -441,19 +441,19 @@ function BookingInfo({
   compact?: boolean;
 }) {
   return (
-    <div className="rounded-3xl bg-[#fbf7f7] p-6 shadow-[0_0_18px_rgba(0,0,0,0.18)] md:p-8">
-      <div className="mb-5 flex items-center gap-2">
-        <CalendarDays size={34} className="text-neutral-500" />
-        {compact && <h3 className="text-2xl font-bold">Detail Booking</h3>}
+    <div className="rounded-2xl bg-[#fbf7f7] p-4 shadow-[0_0_14px_rgba(0,0,0,0.16)] md:p-5">
+      <div className="mb-3 flex items-center gap-2">
+        <CalendarDays size={24} className="text-neutral-500" />
+        {compact && <h3 className="text-lg font-bold">Detail Booking</h3>}
       </div>
-      <div className="space-y-3 text-base md:text-lg">
+      <div className="space-y-1.5 text-xs md:text-sm">
         <InfoRow label="Nama" value={formData.fullName || "-"} />
         <InfoRow label="Treatment" value={treatment} />
         <InfoRow label="Dokter / Terapis" value={therapist} />
         <InfoRow label="Tanggal" value={formatDate(formData.bookingDate)} />
         <InfoRow label="Jam" value={formData.bookingTime || "-"} />
       </div>
-      <div className="my-6 border-t border-neutral-300" />
+      <div className="my-4 border-t border-neutral-300" />
       <InfoRow label="Total Pembayaran" value={formatRupiah(totalPayment)} strong />
     </div>
   );
@@ -461,7 +461,7 @@ function BookingInfo({
 
 function InfoRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className="grid grid-cols-[150px_12px_1fr] gap-2">
+    <div className="grid grid-cols-[110px_8px_1fr] gap-2">
       <span>{label}</span>
       <span>:</span>
       <span className={strong ? "font-bold" : ""}>{value}</span>
@@ -485,15 +485,15 @@ function PaymentStep({
   onConfirm: () => void;
 }) {
   return (
-    <div className="space-y-8">
-      <h2 className="text-4xl font-bold text-[#bf9130] md:text-5xl">Pembayaran</h2>
+    <div className="space-y-5">
+      <h2 className="text-2xl font-bold text-[#bf9130] md:text-3xl">Pembayaran</h2>
       <BookingInfo formData={formData} treatment={treatment} therapist={therapist} totalPayment={totalPayment} />
 
-      <div className="rounded-3xl bg-[#fbf7f7] p-6 shadow-[0_0_18px_rgba(0,0,0,0.18)] md:p-8">
-        <p className="mb-5 text-base">Scan QRIS dibawah ini menggunakan pembayaran favorit anda</p>
+      <div className="rounded-2xl bg-[#fbf7f7] p-4 shadow-[0_0_14px_rgba(0,0,0,0.16)] md:p-5">
+        <p className="mb-4 text-sm">Scan QRIS dibawah ini menggunakan pembayaran favorit anda</p>
         <div className="mx-auto w-full max-w-xs rounded-lg border border-neutral-900 bg-white p-4 text-center">
           <p className="text-sm font-bold">QRIS</p>
-          <div className="mx-auto my-3 grid h-44 w-44 grid-cols-7 gap-1 bg-white">
+          <div className="mx-auto my-3 grid h-28 w-28 grid-cols-7 gap-1 bg-white">
             {Array.from({ length: 49 }).map((_, index) => (
               <span
                 key={index}
@@ -509,18 +509,18 @@ function PaymentStep({
           <p className="mt-2 text-sm font-bold text-neutral-700">BCA  BRI  DANA  OVO  GOPAY  LinkAja</p>
         </div>
 
-        <div className="mt-5 flex items-center justify-between rounded-lg border border-neutral-900 p-4">
+        <div className="mt-4 flex items-center justify-between rounded-lg border border-neutral-900 p-3">
           <div>
-            <p className="text-base font-semibold">Total Bayar</p>
-            <p className="text-2xl font-bold">{formatRupiah(totalPayment)}</p>
+            <p className="text-sm font-semibold">Total Bayar</p>
+          <p className="text-lg font-bold">{formatRupiah(totalPayment)}</p>
           </div>
           <div className="text-right">
-            <p className="text-base font-semibold">Sisa Waktu Pembayaran</p>
-            <p className="text-2xl font-bold">14:59</p>
+            <p className="text-sm font-semibold">Sisa Waktu Pembayaran</p>
+            <p className="text-lg font-bold">14:59</p>
           </div>
         </div>
 
-        <div className="mt-5 flex gap-3 text-sm">
+        <div className="mt-4 flex gap-3 text-xs">
           <ShieldCheck className="shrink-0 text-neutral-600" />
           <p>Setelah pembayaran berhasil, status booking akan otomatis diperbarui. Jangan tutup pembayaran ini sebelum pembayaran terverifikasi.</p>
         </div>
@@ -528,7 +528,7 @@ function PaymentStep({
         <button
           type="button"
           onClick={onConfirm}
-          className="mt-6 w-full rounded-full bg-[#17a900] px-6 py-4 text-xl font-bold text-white hover:bg-[#148f00]"
+          className="mt-5 w-full rounded-full bg-[#17a900] px-5 py-2.5 text-base font-bold text-white hover:bg-[#148f00]"
         >
           Simulasikan Pembayaran Berhasil
         </button>
@@ -553,18 +553,18 @@ function SuccessStep({
   onClose: () => void;
 }) {
   return (
-    <div className="space-y-6 text-center">
-      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#43b400] text-white">
-        <Check size={56} strokeWidth={4} />
+    <div className="space-y-4 text-center">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#43b400] text-white">
+        <Check size={38} strokeWidth={4} />
       </div>
       <div>
-        <h2 className="text-3xl font-semibold text-[#37b400]">Pembayaran Berhasil!</h2>
-        <p className="text-2xl font-medium">Booking Anda telah dikonfirmasi.</p>
+        <h2 className="text-xl font-semibold text-[#37b400]">Pembayaran Berhasil!</h2>
+        <p className="text-lg font-medium">Booking Anda telah dikonfirmasi.</p>
       </div>
 
       <div className="text-left">
         <BookingInfo formData={formData} treatment={treatment} therapist={therapist} totalPayment={totalPayment} compact />
-        <div className="mt-6 rounded-3xl bg-[#fbf7f7] p-6 text-left shadow-[0_0_18px_rgba(0,0,0,0.18)]">
+        <div className="mt-4 rounded-2xl bg-[#fbf7f7] p-4 text-left shadow-[0_0_14px_rgba(0,0,0,0.16)]">
           <div className="flex items-center gap-3 text-lg font-medium">
             <CalendarDays className="text-neutral-500" size={34} />
             Ingat Jadwal Anda
@@ -582,7 +582,7 @@ function SuccessStep({
       <div className="grid gap-4 sm:grid-cols-2">
         <button
           type="button"
-          className="inline-flex items-center justify-center gap-3 rounded-md border border-[#bf9130] px-5 py-4 text-xl font-medium"
+          className="inline-flex items-center justify-center gap-2 rounded-md border border-[#bf9130] px-4 py-2.5 text-base font-medium"
         >
           <CalendarDays size={34} className="text-neutral-500" />
           Lihat Booking Saya
@@ -590,7 +590,7 @@ function SuccessStep({
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex items-center justify-center gap-3 rounded-md bg-[#bf9130] px-5 py-4 text-xl font-medium text-white"
+          className="inline-flex items-center justify-center gap-2 rounded-md bg-[#bf9130] px-4 py-2.5 text-base font-medium text-white"
         >
           <Home size={34} className="text-neutral-950" />
           Kembali ke Beranda

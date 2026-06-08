@@ -6,10 +6,10 @@ export default function DokterHeader() {
       <Image
         src="/logo.png"
         alt="Miamore Aesthetic Clinic"
-        width={120}
-        height={88}
+        width={96}
+        height={70}
         priority
-        className="h-auto w-28 object-contain md:w-32"
+        className="h-auto w-20 object-contain md:w-24"
       />
 
       <div className="flex flex-col items-center gap-2">
