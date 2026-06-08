@@ -1,6 +1,20 @@
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Hero() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(Boolean(localStorage.getItem("user")));
+  }, []);
+
+  const heroButton = isLoggedIn
+    ? { href: "/treatment", label: "Lihat Treatment" }
+    : { href: "/login", label: "Login" };
+
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#18120e] px-5 pt-24 text-white md:px-10 lg:px-20">
       <Image
@@ -30,9 +44,12 @@ export default function Hero() {
             profesional untuk kulit sehat, glowing, dan percaya diri.
           </p>
 
-          <button className="mt-8 rounded-full bg-yellow-600 px-6 py-3 text-sm font-semibold text-white hover:bg-yellow-700">
-            Lihat Treatment
-          </button>
+          <Link
+            href={heroButton.href}
+            className="mt-8 inline-flex rounded-full bg-yellow-600 px-6 py-3 text-sm font-semibold text-white hover:bg-yellow-700"
+          >
+            {heroButton.label}
+          </Link>
         </div>
       </div>
     </section>

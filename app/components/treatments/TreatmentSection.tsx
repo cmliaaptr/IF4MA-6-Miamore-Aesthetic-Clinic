@@ -1,6 +1,8 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { useState } from "react";
+import BookingModal from "../booking/BookingModal";
 import TreatmentCard from "./TreatmentCard";
 
 const treatments = [
@@ -34,6 +36,9 @@ const categories = ["Semua Treatment", "Flek", "Acne", "Glowing"];
 
 export default function TreatmentSection() {
   const searchParams = useSearchParams();
+  const [selectedTreatment, setSelectedTreatment] = useState<
+    (typeof treatments)[number] | null
+  >(null);
 
   const categoryFromUrl =
     searchParams.get("category") || "Semua Treatment";
@@ -80,10 +85,24 @@ export default function TreatmentSection() {
               description={item.description}
               category={item.category}
               price={item.price}
+              onBooking={() => setSelectedTreatment(item)}
             />
           ))}
         </div>
       </div>
+
+      <BookingModal
+        isOpen={Boolean(selectedTreatment)}
+        selectedTreatment={
+          selectedTreatment
+            ? {
+                name: selectedTreatment.title,
+                price: selectedTreatment.price,
+              }
+            : null
+        }
+        onClose={() => setSelectedTreatment(null)}
+      />
     </section>
   );
 }

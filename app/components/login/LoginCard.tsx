@@ -114,7 +114,7 @@ export default function LoginCard() {
 
         // ROLE PELANGGAN
         else {
-          router.push("/landingpage");
+          router.push("/");
         }
       } else {
         // ERROR BACKEND
@@ -200,7 +200,7 @@ export default function LoginCard() {
         <p className="text-center text-sm text-gray-500">
           Belum punya akun?{" "}
           <Link
-            href="/"
+            href="/register"
             className="
               font-semibold
               text-[#d4af37]

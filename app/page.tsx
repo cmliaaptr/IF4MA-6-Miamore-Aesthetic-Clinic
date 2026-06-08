@@ -1,18 +1,17 @@
-import RegisterCard from "./components/register/RegisterCard";
+import Navbar from "./components/global/Navbar";
+import Hero from "./components/landing/Hero";
+import WhyChoose from "./components/landing/WhyChoose";
+import TreatmentSection from "./components/landing/TreatmentSection";
+import Footer from "./components/global/Footer";
 
-export default function RegisterPage() {
+export default function Home() {
   return (
-    <main
-      className="
-        min-h-screen flex items-center justify-center
-        bg-cover bg-center
-        px-4 py-8
-      "
-      style={{
-        backgroundImage: "url('/images/background.jpg')",
-      }}
-    >
-      <RegisterCard />
+    <main className="min-h-screen overflow-x-hidden bg-white text-neutral-900">
+      <Navbar />
+      <Hero />
+      <WhyChoose />
+      <TreatmentSection />
+      <Footer />
     </main>
   );
 }

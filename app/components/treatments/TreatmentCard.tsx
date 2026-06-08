@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 type TreatmentCardProps = {
   image: string;
@@ -7,6 +6,7 @@ type TreatmentCardProps = {
   description: string;
   category: string;
   price: string;
+  onBooking: () => void;
 };
 
 export default function TreatmentCard({
@@ -15,6 +15,7 @@ export default function TreatmentCard({
   description,
   category,
   price,
+  onBooking,
 }: TreatmentCardProps) {
   return (
     <div className="overflow-hidden rounded-xl bg-white border border-gray-200 shadow-sm">
@@ -50,11 +51,14 @@ export default function TreatmentCard({
             </p>
           </div>
 
-          <Link href="/booking">
-            <button className="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 text-black">
-              +
-            </button>
-          </Link>
+          <button
+            type="button"
+            onClick={onBooking}
+            className="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 text-black"
+            aria-label={`Booking ${title}`}
+          >
+            +
+          </button>
         </div>
       </div>
     </div>
