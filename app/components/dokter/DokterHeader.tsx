@@ -4,7 +4,7 @@ export default function DokterHeader() {
   return (
     <header className="flex h-32 items-center justify-between border-b border-[#efd487] bg-white px-8 shadow-[0_2px_8px_rgba(212,177,72,0.18)] md:px-16 lg:px-24">
       <Image
-        src="/logo.png"
+        src="/images/logo.png"
         alt="Miamore Aesthetic Clinic"
         width={96}
         height={70}
