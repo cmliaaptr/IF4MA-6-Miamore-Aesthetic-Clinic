@@ -3,12 +3,23 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { BookOpenText, CalendarDays, LayoutDashboard, LogOut } from "lucide-react";
+import {
+  BookOpenText,
+  CalendarCheck2,
+  CalendarDays,
+  LayoutDashboard,
+  LogOut,
+} from "lucide-react";
 
 const menuItems = [
   { label: "Dashboard", href: "/dokter", icon: LayoutDashboard },
   { label: "Jadwal Dokter", href: "/dokter/jadwal", icon: CalendarDays },
   { label: "Booking / Pasien", href: "/dokter/booking", icon: BookOpenText },
+  {
+    label: "Hasil Treatment",
+    href: "/dokter/hasil-treatment",
+    icon: CalendarCheck2,
+  },
 ];
 
 export default function DokterSidebar() {
