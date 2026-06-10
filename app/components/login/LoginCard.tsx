@@ -114,7 +114,7 @@ export default function LoginCard() {
 
         // ROLE PELANGGAN
         else {
-          router.push("/");
+          router.push("/customer");
         }
       } else {
         // ERROR BACKEND
