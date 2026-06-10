@@ -3,12 +3,12 @@ import DoctorScheduleTable, {
 } from "../../components/dokter/jadwal/DoctorScheduleTable";
 
 const schedules: DoctorSchedule[] = [
-  { id: 1, day: "Senin", startTime: "Off", endTime: "Off" },
-  { id: 2, day: "Selasa", startTime: "10:00", endTime: "18:00" },
-  { id: 3, day: "Rabu", startTime: "10:00", endTime: "18:00" },
-  { id: 4, day: "Kamis", startTime: "10:00", endTime: "18:00" },
-  { id: 5, day: "Jumat", startTime: "10:00", endTime: "18:00" },
-  { id: 6, day: "Sabtu", startTime: "10:00", endTime: "18:00" },
+  { id: 1, day: "Senin", startTime: "Off", endTime: "Off", capacityPerHour: 0 },
+  { id: 2, day: "Selasa", startTime: "10:00", endTime: "18:00", capacityPerHour: 5 },
+  { id: 3, day: "Rabu", startTime: "10:00", endTime: "18:00", capacityPerHour: 5 },
+  { id: 4, day: "Kamis", startTime: "10:00", endTime: "18:00", capacityPerHour: 5 },
+  { id: 5, day: "Jumat", startTime: "10:00", endTime: "18:00", capacityPerHour: 5 },
+  { id: 6, day: "Sabtu", startTime: "10:00", endTime: "18:00", capacityPerHour: 5 },
 ];
 
 export default function DokterJadwalPage() {

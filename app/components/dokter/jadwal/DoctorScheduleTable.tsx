@@ -3,6 +3,7 @@ export type DoctorSchedule = {
   day: string;
   startTime: string;
   endTime: string;
+  capacityPerHour: number;
 };
 
 export default function DoctorScheduleTable({
@@ -22,7 +23,8 @@ export default function DoctorScheduleTable({
             <th className="border-r border-neutral-200 px-4 py-4">
               Jam Mulai
             </th>
-            <th className="px-4 py-4">Jam Selesai</th>
+            <th className="border-r border-neutral-200 px-4 py-4">Jam Selesai</th>
+            <th className="px-4 py-4">Kapasitas per Jam</th>
           </tr>
         </thead>
         <tbody>
@@ -37,7 +39,8 @@ export default function DoctorScheduleTable({
               <td className="border-r border-neutral-200 px-4 py-2.5">
                 {item.startTime}
               </td>
-              <td className="px-4 py-2.5">{item.endTime}</td>
+              <td className="border-r border-neutral-200 px-4 py-2.5">{item.endTime}</td>
+              <td className="px-4 py-2.5">{item.capacityPerHour}</td>
             </tr>
           ))}
         </tbody>
