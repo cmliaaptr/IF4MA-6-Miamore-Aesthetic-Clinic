@@ -1,20 +1,16 @@
-// components/admin/AdminHeader.tsx
+import ProfileDropdown from "../global/ProfileDropdown";
 
 export default function AdminHeader() {
   return (
     <header className="admin-header">
-      <div className="header-left">
-        {/* Nanti bisa ditambah search bar */}
-      </div>
+      <div className="header-left" />
 
       <div className="header-right">
-        <button className="notification-button">🔔</button>
-
-        <div className="admin-profile">
-          <div className="admin-avatar">👤</div>
-          <span>Admin</span>
-          <span>▼</span>
-        </div>
+        <ProfileDropdown
+          name="Admin"
+          profileHref="/admin/profile"
+          settingsHref="/admin/settings"
+        />
       </div>
     </header>
   );

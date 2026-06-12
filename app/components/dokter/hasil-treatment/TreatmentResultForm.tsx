@@ -1,4 +1,4 @@
-import { RotateCcw, Send } from "lucide-react";
+import { RotateCcw, Send, X } from "lucide-react";
 import type {
   TreatmentPatient,
   TreatmentResultFormData,
@@ -10,6 +10,7 @@ type TreatmentResultFormProps = {
   onChange: (field: keyof TreatmentResultFormData, value: string) => void;
   onReset: () => void;
   onSubmit: () => void;
+  onClose?: () => void;
 };
 
 const fields: {
@@ -56,17 +57,33 @@ export default function TreatmentResultForm({
   onChange,
   onReset,
   onSubmit,
+  onClose,
 }: TreatmentResultFormProps) {
   return (
     <div className="rounded-lg border border-neutral-200 bg-white p-5">
-      <div className="mb-5 border-b border-neutral-200 pb-4">
-        <p className="text-sm font-semibold text-[#d6b53f]">
-          Form Hasil Treatment
-        </p>
-        <h2 className="mt-1 text-2xl font-bold text-black">{patient.name}</h2>
-        <p className="mt-1 text-sm text-neutral-600">
-          {patient.treatment} - {patient.schedule}
-        </p>
+      <div className="mb-5 flex items-start justify-between gap-4 border-b border-neutral-200 pb-4">
+        <div>
+          <p className="text-sm font-semibold text-[#d6b53f]">
+            Form Hasil Treatment
+          </p>
+          <h2 className="mt-1 text-2xl font-bold text-black">
+            {patient.name}
+          </h2>
+          <p className="mt-1 text-sm text-neutral-600">
+            {patient.treatment} - {patient.schedule}
+          </p>
+        </div>
+
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Tutup form"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-neutral-200 text-neutral-600 transition hover:bg-neutral-50 hover:text-black"
+          >
+            <X size={18} />
+          </button>
+        ) : null}
       </div>
 
       <form

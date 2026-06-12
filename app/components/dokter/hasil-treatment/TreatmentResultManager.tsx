@@ -26,6 +26,7 @@ export default function TreatmentResultManager({
   patients,
 }: TreatmentResultManagerProps) {
   const [selectedPatient, setSelectedPatient] = useState(patients[0]);
+  const [formPatient, setFormPatient] = useState<TreatmentPatient | null>(null);
   const [results, setResults] = useState<Record<number, TreatmentResult>>({});
   const [formData, setFormData] = useState<TreatmentResultFormData>(emptyForm);
   const [message, setMessage] = useState("");
@@ -39,7 +40,18 @@ export default function TreatmentResultManager({
 
   const handleSelect = (patient: TreatmentPatient) => {
     setSelectedPatient(patient);
+    setMessage("");
+  };
+
+  const handleOpenForm = (patient: TreatmentPatient) => {
+    setSelectedPatient(patient);
+    setFormPatient(patient);
     setFormData(results[patient.id] ?? emptyForm);
+    setMessage("");
+  };
+
+  const handleCloseForm = () => {
+    setFormPatient(null);
     setMessage("");
   };
 
@@ -56,6 +68,8 @@ export default function TreatmentResultManager({
   };
 
   const handleSubmit = () => {
+    if (!formPatient) return;
+
     const isIncomplete = Object.values(formData).some(
       (value) => !value.trim()
     );
@@ -72,12 +86,13 @@ export default function TreatmentResultManager({
 
     setResults((prev) => ({
       ...prev,
-      [selectedPatient.id]: {
+      [formPatient.id]: {
         ...formData,
         submittedAt,
       },
     }));
     setMessage("Hasil treatment berhasil disiapkan untuk riwayat customer.");
+    setFormPatient(null);
   };
 
   return (
@@ -114,6 +129,7 @@ export default function TreatmentResultManager({
         results={results}
         selectedPatientId={selectedPatient.id}
         onSelect={handleSelect}
+        onFill={handleOpenForm}
       />
 
       {message ? (
@@ -128,20 +144,28 @@ export default function TreatmentResultManager({
         </p>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
-        <TreatmentResultForm
-          patient={selectedPatient}
-          formData={formData}
-          onChange={handleChange}
-          onReset={handleReset}
-          onSubmit={handleSubmit}
-        />
+      <div className="grid gap-6">
         <TreatmentResultPreview
           patient={selectedPatient}
-          formData={formData}
+          formData={results[selectedPatient.id] ?? emptyForm}
           savedResult={savedResult}
         />
       </div>
+
+      {formPatient ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6">
+          <div className="max-h-[calc(100vh-48px)] w-full max-w-3xl overflow-y-auto rounded-lg shadow-2xl">
+            <TreatmentResultForm
+              patient={formPatient}
+              formData={formData}
+              onChange={handleChange}
+              onReset={handleReset}
+              onSubmit={handleSubmit}
+              onClose={handleCloseForm}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

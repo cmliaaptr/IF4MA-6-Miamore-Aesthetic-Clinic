@@ -26,19 +26,19 @@ export default function DokterSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-[272px] shrink-0 border-r border-[#efd487] bg-white md:flex md:flex-col">
-      <div className="flex h-32 items-center justify-center">
+    <aside className="fixed left-0 top-0 z-[1000] hidden h-screen w-[250px] shrink-0 flex-col border-r border-neutral-200 bg-white p-5 md:flex">
+      <div className="mb-6 flex h-[200px] items-center justify-center">
         <Image
           src="/images/logo.png"
           alt="Miamore Aesthetic Clinic"
-          width={112}
-          height={82}
+          width={200}
+          height={120}
           priority
-          className="h-auto w-28 object-contain"
+          className="h-full w-full object-contain"
         />
       </div>
 
-      <nav className="flex flex-1 flex-col gap-2 px-9 py-9">
+      <nav className="flex flex-1 flex-col gap-2.5">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -50,16 +50,16 @@ export default function DokterSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex min-h-10 items-center gap-6 border-l-2 px-2 text-[15px] font-medium transition ${
+              className={`flex items-center gap-3 rounded-[10px] px-3.5 py-3 text-[15px] font-medium transition ${
                 isActive
-                  ? "border-[#d6b53f] text-[#2a2a2a]"
-                  : "border-transparent text-neutral-500 hover:border-[#d6b53f] hover:text-[#2a2a2a]"
+                  ? "bg-[#f6f1df] font-semibold text-[#b88a18]"
+                  : "text-neutral-600 hover:bg-[#f6f1df] hover:text-[#b88a18]"
               }`}
             >
               <Icon
-                size={20}
+                size={18}
                 strokeWidth={2}
-                className={isActive ? "text-[#d6b53f]" : "text-neutral-500"}
+                className="text-current"
               />
               <span>{item.label}</span>
             </Link>
@@ -67,12 +67,12 @@ export default function DokterSidebar() {
         })}
       </nav>
 
-      <div className="px-9 pb-8">
+      <div className="mt-auto pt-12">
         <Link
           href="/login"
-          className="flex min-h-10 items-center gap-6 px-2 text-[15px] font-medium text-neutral-500 transition hover:text-[#2a2a2a]"
+          className="flex items-center gap-3 rounded-[10px] px-3.5 py-3 text-[15px] font-medium text-neutral-600 transition hover:bg-red-50 hover:text-red-600"
         >
-          <LogOut size={20} />
+          <LogOut size={18} />
           <span>Logout</span>
         </Link>
       </div>

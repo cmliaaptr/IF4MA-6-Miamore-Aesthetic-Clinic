@@ -9,6 +9,7 @@ type TreatmentPatientListProps = {
   results: Record<number, TreatmentResult>;
   selectedPatientId: number;
   onSelect: (patient: TreatmentPatient) => void;
+  onFill: (patient: TreatmentPatient) => void;
 };
 
 export default function TreatmentPatientList({
@@ -16,15 +17,16 @@ export default function TreatmentPatientList({
   results,
   selectedPatientId,
   onSelect,
+  onFill,
 }: TreatmentPatientListProps) {
   return (
     <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
-      <table className="w-full min-w-[760px] border-collapse text-left">
+      <table className="w-full min-w-[640px] border-collapse text-left md:min-w-[760px]">
         <thead>
           <tr className="border-b border-neutral-200 text-sm font-semibold text-neutral-600">
             <th className="w-[64px] px-4 py-4 text-center">No.</th>
             <th className="px-4 py-4">Nama Pasien</th>
-            <th className="px-4 py-4">Treatment</th>
+            <th className="hidden px-4 py-4 sm:table-cell">Treatment</th>
             <th className="px-4 py-4">Jadwal</th>
             <th className="w-[150px] px-4 py-4 text-center">Status Hasil</th>
             <th className="w-[130px] px-4 py-4 text-center">Aksi</th>
@@ -38,13 +40,30 @@ export default function TreatmentPatientList({
             return (
               <tr
                 key={patient.id}
-                className={`border-b border-neutral-100 text-sm text-neutral-800 last:border-b-0 ${
+                onClick={() => onSelect(patient)}
+                className={`cursor-pointer border-b border-neutral-100 text-sm text-neutral-800 transition last:border-b-0 hover:bg-[#fffdf0] ${
                   isSelected ? "bg-[#fff8df]" : "bg-white"
                 }`}
               >
                 <td className="px-4 py-3 text-center">{index + 1}</td>
-                <td className="px-4 py-3 font-semibold">{patient.name}</td>
-                <td className="px-4 py-3">{patient.treatment}</td>
+                <td className="px-4 py-3">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onSelect(patient);
+                    }}
+                    className="text-left font-semibold text-neutral-900 transition hover:text-[#b89624]"
+                  >
+                    {patient.name}
+                  </button>
+                  <p className="mt-1 text-xs text-neutral-500 sm:hidden">
+                    {patient.treatment}
+                  </p>
+                </td>
+                <td className="hidden px-4 py-3 sm:table-cell">
+                  {patient.treatment}
+                </td>
                 <td className="px-4 py-3 text-neutral-600">
                   {patient.schedule}
                 </td>
@@ -63,7 +82,10 @@ export default function TreatmentPatientList({
                 <td className="px-4 py-3 text-center">
                   <button
                     type="button"
-                    onClick={() => onSelect(patient)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onFill(patient);
+                    }}
                     className="inline-flex h-9 items-center gap-2 rounded-md bg-[#d6b53f] px-3 text-sm font-semibold text-white transition hover:bg-[#c29f2f]"
                   >
                     <FilePenLine size={16} />
