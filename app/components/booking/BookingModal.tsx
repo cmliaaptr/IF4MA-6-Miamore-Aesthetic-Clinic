@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Check, ChevronDown, Home, MessageCircle, ShieldCheck, User, X } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Home, MessageCircle, User, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 
 export type BookingTreatment = {
@@ -29,6 +29,7 @@ type BookingFormData = {
 };
 
 type BookingPayload = {
+  id_user: number;
   nama_lengkap: string;
   tanggal_lahir: string;
   jenis_kelamin: string;
@@ -40,11 +41,17 @@ type BookingPayload = {
   treatment: string;
   dokter_terapis?: string;
   catatan?: string;
-  total_pembayaran: number;
-  metode_pembayaran: "QRIS";
+  total_pembayaran?: number;
 };
 
-type BookingStep = "form" | "payment" | "success";
+type BookingStep = "form" | "success";
+
+type LoggedInCustomer = {
+  id_user: number;
+  username: string;
+  email?: string;
+  role: string;
+};
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
@@ -89,13 +96,43 @@ function formatDate(date: string) {
   }).format(new Date(`${date}T00:00:00`));
 }
 
-function createPayload(form: BookingFormData, totalPayment: number): BookingPayload {
+function getLoggedInCustomer(): LoggedInCustomer | null {
+  try {
+    const rawUser = localStorage.getItem("user");
+    if (!rawUser) return null;
+
+    const user = JSON.parse(rawUser) as Partial<LoggedInCustomer>;
+    if (
+      typeof user.id_user !== "number" ||
+      user.role !== "pelanggan" ||
+      typeof user.username !== "string"
+    ) {
+      return null;
+    }
+
+    return {
+      id_user: user.id_user,
+      username: user.username,
+      email: typeof user.email === "string" ? user.email : undefined,
+      role: user.role,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function createPayload(
+  form: BookingFormData,
+  totalPayment: number,
+  customer: LoggedInCustomer
+): BookingPayload {
   return {
+    id_user: customer.id_user,
     nama_lengkap: form.fullName,
     tanggal_lahir: form.birthDate,
     jenis_kelamin: form.gender,
     no_telephone: form.phone,
-    email: form.email || undefined,
+    email: form.email || customer.email || undefined,
     alamat: form.address,
     tanggal_booking: form.bookingDate,
     waktu_booking: form.bookingTime,
@@ -103,7 +140,6 @@ function createPayload(form: BookingFormData, totalPayment: number): BookingPayl
     dokter_terapis: form.therapist || undefined,
     catatan: form.notes || undefined,
     total_pembayaran: totalPayment,
-    metode_pembayaran: "QRIS",
   };
 }
 
@@ -161,7 +197,9 @@ export default function BookingModal({
 
     const treatment = formData.treatment || selectedTreatment?.name || "";
     const nextForm = { ...formData, treatment };
+    const customer = getLoggedInCustomer();
 
+    if (!customer) return setError("Silakan login sebagai pelanggan sebelum booking.");
     if (!nextForm.fullName.trim()) return setError("Nama lengkap wajib diisi.");
     if (!nextForm.birthDate) return setError("Tanggal lahir wajib diisi.");
     if (!nextForm.gender) return setError("Jenis kelamin wajib dipilih.");
@@ -181,18 +219,28 @@ export default function BookingModal({
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify(createPayload(nextForm, totalPayment)),
+        body: JSON.stringify(createPayload(nextForm, totalPayment, customer)),
       });
 
-      if (response.ok) {
-        const result = await response.json().catch(() => null);
-        setOrderId(result?.data?.order_id || result?.order_id || orderId);
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const validationMessage = result?.errors
+          ? Object.values(result.errors).flat().join(" ")
+          : result?.message;
+        throw new Error(validationMessage || "Booking gagal dibuat.");
       }
+
+      setOrderId(result?.data?.order_id || result?.order_id || orderId);
+      setStep("success");
     } catch (submitError) {
-      console.log(submitError);
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Booking gagal dibuat. Silakan coba lagi."
+      );
     } finally {
       setIsSubmitting(false);
-      setStep("payment");
     }
   };
 
@@ -274,20 +322,9 @@ export default function BookingModal({
                 disabled={isSubmitting}
                 className="w-full rounded-full bg-[#17a900] px-5 py-3 text-lg font-bold text-white hover:bg-[#148f00] disabled:cursor-not-allowed disabled:bg-neutral-400 md:text-xl"
               >
-                {isSubmitting ? "Memproses..." : "Lanjut ke Pembayaran ->"}
+                {isSubmitting ? "Memproses..." : "Booking Sekarang"}
               </button>
             </form>
-          )}
-
-          {step === "payment" && (
-            <PaymentStep
-              orderId={orderId}
-              totalPayment={totalPayment}
-              treatment={displayTreatment}
-              therapist={displayTherapist}
-              formData={formData}
-              onConfirm={() => setStep("success")}
-            />
           )}
 
           {step === "success" && (
@@ -469,74 +506,6 @@ function InfoRow({ label, value, strong = false }: { label: string; value: strin
   );
 }
 
-function PaymentStep({
-  formData,
-  treatment,
-  therapist,
-  totalPayment,
-  orderId,
-  onConfirm,
-}: {
-  formData: BookingFormData;
-  treatment: string;
-  therapist: string;
-  totalPayment: number;
-  orderId: string;
-  onConfirm: () => void;
-}) {
-  return (
-    <div className="space-y-5">
-      <h2 className="text-2xl font-bold text-[#bf9130] md:text-3xl">Pembayaran</h2>
-      <BookingInfo formData={formData} treatment={treatment} therapist={therapist} totalPayment={totalPayment} />
-
-      <div className="rounded-2xl bg-[#fbf7f7] p-4 shadow-[0_0_14px_rgba(0,0,0,0.16)] md:p-5">
-        <p className="mb-4 text-sm">Scan QRIS dibawah ini menggunakan pembayaran favorit anda</p>
-        <div className="mx-auto w-full max-w-xs rounded-lg border border-neutral-900 bg-white p-4 text-center">
-          <p className="text-sm font-bold">QRIS</p>
-          <div className="mx-auto my-3 grid h-28 w-28 grid-cols-7 gap-1 bg-white">
-            {Array.from({ length: 49 }).map((_, index) => (
-              <span
-                key={index}
-                className={(index * 7 + index) % 3 === 0 || index % 5 === 0 ? "bg-black" : "bg-white"}
-              />
-            ))}
-          </div>
-          <p className="text-sm">Order ID : {orderId}</p>
-        </div>
-
-        <div className="mx-auto mt-5 max-w-xl rounded-lg border border-neutral-900 p-3 text-center">
-          <p className="text-sm">Mendukung aplikasi pembayaran :</p>
-          <p className="mt-2 text-sm font-bold text-neutral-700">BCA  BRI  DANA  OVO  GOPAY  LinkAja</p>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between rounded-lg border border-neutral-900 p-3">
-          <div>
-            <p className="text-sm font-semibold">Total Bayar</p>
-          <p className="text-lg font-bold">{formatRupiah(totalPayment)}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-semibold">Sisa Waktu Pembayaran</p>
-            <p className="text-lg font-bold">14:59</p>
-          </div>
-        </div>
-
-        <div className="mt-4 flex gap-3 text-xs">
-          <ShieldCheck className="shrink-0 text-neutral-600" />
-          <p>Setelah pembayaran berhasil, status booking akan otomatis diperbarui. Jangan tutup pembayaran ini sebelum pembayaran terverifikasi.</p>
-        </div>
-
-        <button
-          type="button"
-          onClick={onConfirm}
-          className="mt-5 w-full rounded-full bg-[#17a900] px-5 py-2.5 text-base font-bold text-white hover:bg-[#148f00]"
-        >
-          Simulasikan Pembayaran Berhasil
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function SuccessStep({
   formData,
   treatment,
@@ -558,8 +527,8 @@ function SuccessStep({
         <Check size={38} strokeWidth={4} />
       </div>
       <div>
-        <h2 className="text-xl font-semibold text-[#37b400]">Pembayaran Berhasil!</h2>
-        <p className="text-lg font-medium">Booking Anda telah dikonfirmasi.</p>
+        <h2 className="text-xl font-semibold text-[#37b400]">Booking Berhasil!</h2>
+        <p className="text-lg font-medium">Booking Anda sudah masuk ke sistem.</p>
       </div>
 
       <div className="text-left">
@@ -572,8 +541,8 @@ function SuccessStep({
           <p className="mt-5 text-sm">Mohon hadir 10 menit sebelum jadwal treatment</p>
           <p className="mt-5 text-sm">Terima kasih telah mempercayakan perawatan anda di Miamore Aesthetic Clinic</p>
           <div className="mt-5 space-y-2 text-sm">
-            <InfoRow label="Status Booking" value="Terkonfirmasi" />
-            <InfoRow label="Metode Bayar" value="QRIS" strong />
+            <InfoRow label="Status Booking" value="Booking" />
+            <InfoRow label="Status Bayar" value="Belum Dibayar" strong />
             <InfoRow label="Order ID" value={orderId} />
           </div>
         </div>
