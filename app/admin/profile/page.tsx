@@ -1,21 +1,19 @@
-export default function AdminProfilePage() {
-  return (
-    <section>
-      <h1 className="page-title">Profile Admin</h1>
+import StaffProfilePage from "@/app/components/profile/StaffProfilePage";
 
-      <div className="rounded-lg border border-neutral-200 bg-white p-6">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-neutral-200 text-2xl font-bold text-neutral-700">
-            A
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-black">Admin Miamore</h2>
-            <p className="mt-1 text-sm text-neutral-600">
-              Administrator Miamore Aesthetic Clinic
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
+export default function AdminProfilePage() {
+  const name = "Admin Miamore";
+
+  return (
+    <StaffProfilePage
+      title="Profile Admin"
+      breadcrumbRoot="Dashboard"
+      name={name}
+      role="Admin"
+      initials="AM"
+      summary="Administrator Miamore Aesthetic Clinic yang mengelola data operasional, layanan treatment, pelanggan, booking, pembayaran, dan laporan klinik."
+      phone="+62 812 3456 7890"
+      email="admin@miamoreclinic.com"
+      address="Jl. Sudirman No. 123, Bandung, Jawa Barat, 40111"
+    />
   );
 }

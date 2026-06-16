@@ -11,6 +11,7 @@ export type BookingTreatment = {
 type BookingModalProps = {
   isOpen: boolean;
   selectedTreatment?: BookingTreatment | null;
+  availableTreatments?: BookingTreatment[];
   onClose: () => void;
 };
 
@@ -58,6 +59,11 @@ const API_BASE_URL =
 
 const timeOptions = ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
 const therapistOptions = ["Dr. Marissa", "Dr. Nadine", "Terapis Miamore"];
+const defaultTreatmentOptions: BookingTreatment[] = [
+  { name: "Basmi Flek Coba-Coba", price: "Rp. 500.000" },
+  { name: "Acne Treatment", price: "Rp. 450.000" },
+  { name: "Glowing Treatment", price: "Rp. 600.000" },
+];
 
 const initialForm: BookingFormData = {
   fullName: "",
@@ -77,6 +83,24 @@ function priceToNumber(price?: string) {
   if (!price) return 350000;
   const parsed = Number(price.replace(/[^\d]/g, ""));
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 350000;
+}
+
+function createTreatmentOptions(
+  selectedTreatment?: BookingTreatment | null,
+  availableTreatments: BookingTreatment[] = []
+) {
+  const treatmentMap = new Map<string, BookingTreatment>();
+
+  [selectedTreatment, ...availableTreatments, ...defaultTreatmentOptions].forEach((treatment) => {
+    if (!treatment?.name) return;
+    const existingTreatment = treatmentMap.get(treatment.name);
+    treatmentMap.set(treatment.name, {
+      name: treatment.name,
+      price: treatment.price || existingTreatment?.price,
+    });
+  });
+
+  return Array.from(treatmentMap.values());
 }
 
 function formatRupiah(amount: number) {
@@ -146,6 +170,7 @@ function createPayload(
 export default function BookingModal({
   isOpen,
   selectedTreatment,
+  availableTreatments = [],
   onClose,
 }: BookingModalProps) {
   const [step, setStep] = useState<BookingStep>("form");
@@ -154,21 +179,18 @@ export default function BookingModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState("TRD123456789");
 
-  const totalPayment = useMemo(
-    () => priceToNumber(selectedTreatment?.price),
-    [selectedTreatment?.price]
+  const treatmentOptions = useMemo(
+    () => createTreatmentOptions(selectedTreatment, availableTreatments),
+    [availableTreatments, selectedTreatment]
   );
 
-  const treatmentOptions = useMemo(
-    () => [
-      selectedTreatment?.name,
-      "Facial Treatment",
-      "Acne Treatment",
-      "Glowing Treatment",
-      "Brightening",
-      "Anti Aging",
-    ].filter((item, index, arr): item is string => Boolean(item) && arr.indexOf(item) === index),
-    [selectedTreatment?.name]
+  const selectedTreatmentOption = treatmentOptions.find(
+    (treatment) => treatment.name === (formData.treatment || selectedTreatment?.name)
+  );
+
+  const totalPayment = useMemo(
+    () => priceToNumber(selectedTreatmentOption?.price || selectedTreatment?.price),
+    [selectedTreatment?.price, selectedTreatmentOption?.price]
   );
 
   const displayTreatment = formData.treatment || selectedTreatment?.name || "Facial Treatment";
@@ -435,7 +457,7 @@ function SelectField({
   name: string;
   value: string;
   onChange: (event: ChangeEvent<HTMLSelectElement>) => void;
-  options: string[];
+  options: BookingTreatment[];
   placeholder: string;
 }) {
   return (
@@ -453,8 +475,8 @@ function SelectField({
         >
           <option value="">{placeholder}</option>
           {options.map((option) => (
-            <option key={option} value={option}>
-              {option}
+            <option key={option.name} value={option.name}>
+              {option.price ? `${option.name} - ${option.price}` : option.name}
             </option>
           ))}
         </select>

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, LogOut, Menu, Settings, User, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const treatmentMenus = [
   { name: "Acne Treatment", category: "Acne" },
@@ -16,9 +16,33 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState(false);
   const [openProfileMenu, setOpenProfileMenu] = useState(false);
   const [openMobile, setOpenMobile] = useState(false);
+  const [isCustomerLoggedIn, setIsCustomerLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkLoginState = () => {
+      try {
+        const rawUser = localStorage.getItem("user");
+        const user = rawUser ? JSON.parse(rawUser) : null;
+
+        setIsCustomerLoggedIn(Boolean(user && user.role === "pelanggan"));
+      } catch {
+        setIsCustomerLoggedIn(false);
+      }
+    };
+
+    checkLoginState();
+    window.addEventListener("storage", checkLoginState);
+
+    return () => window.removeEventListener("storage", checkLoginState);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("role");
+    document.cookie = "role=; path=/; max-age=0";
+    setIsCustomerLoggedIn(false);
+    setOpenProfileMenu(false);
+    setOpenMobile(false);
     window.location.href = "/login";
   };
 
@@ -67,9 +91,11 @@ export default function Navbar() {
             <Link href="/promo">Promo</Link>
           </li>
 
-          <li>
-            <Link href="/profile">Profile</Link>
-          </li>
+          {isCustomerLoggedIn && (
+            <li>
+              <Link href="/profile">Profile</Link>
+            </li>
+          )}
 
           <li>
             <Link href="/riwayat">Riwayat</Link>
@@ -85,16 +111,25 @@ export default function Navbar() {
         </button>
 
         <div className="relative hidden md:block">
-          <button
-            type="button"
-            onClick={() => setOpenProfileMenu((prev) => !prev)}
-            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white/80 text-neutral-800 shadow-inner ring-1 ring-white/50 transition hover:bg-white"
-            aria-label="Buka menu profile"
-          >
-            <User size={22} />
-          </button>
+          {isCustomerLoggedIn ? (
+            <button
+              type="button"
+              onClick={() => setOpenProfileMenu((prev) => !prev)}
+              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white/80 text-neutral-800 shadow-inner ring-1 ring-white/50 transition hover:bg-white"
+              aria-label="Buka menu profile"
+            >
+              <User size={22} />
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-full bg-[#d4af37] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#c49b24]"
+            >
+              Login
+            </Link>
+          )}
 
-          {openProfileMenu && (
+          {isCustomerLoggedIn && openProfileMenu && (
             <div className="absolute right-0 top-12 z-[10000] w-48 rounded-2xl border border-white/30 bg-white/95 p-2 text-sm font-semibold text-neutral-800 shadow-xl backdrop-blur-xl">
               <Link
                 href="/profile"
@@ -151,23 +186,27 @@ export default function Navbar() {
               Promo
             </Link>
 
-            <Link
-              href="/profile"
-              onClick={() => setOpenMobile(false)}
-              className="flex items-center gap-3 rounded-xl px-3 py-2"
-            >
-              <User size={17} />
-              Profile
-            </Link>
+            {isCustomerLoggedIn && (
+              <>
+                <Link
+                  href="/profile"
+                  onClick={() => setOpenMobile(false)}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2"
+                >
+                  <User size={17} />
+                  Profile
+                </Link>
 
-            <Link
-              href="/settings"
-              onClick={() => setOpenMobile(false)}
-              className="flex items-center gap-3 rounded-xl px-3 py-2"
-            >
-              <Settings size={17} />
-              Settings
-            </Link>
+                <Link
+                  href="/settings"
+                  onClick={() => setOpenMobile(false)}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2"
+                >
+                  <Settings size={17} />
+                  Settings
+                </Link>
+              </>
+            )}
 
             <Link
               href="/riwayat"
@@ -177,14 +216,24 @@ export default function Navbar() {
               Riwayat
             </Link>
 
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-red-600"
-            >
-              <LogOut size={17} />
-              Logout
-            </button>
+            {isCustomerLoggedIn ? (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-red-600"
+              >
+                <LogOut size={17} />
+                Logout
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setOpenMobile(false)}
+                className="block rounded-xl bg-[#d4af37] px-3 py-2 text-center font-bold text-white"
+              >
+                Login
+              </Link>
+            )}
           </div>
         </div>
       )}

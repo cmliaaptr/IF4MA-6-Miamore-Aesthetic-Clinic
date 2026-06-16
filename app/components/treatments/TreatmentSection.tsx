@@ -101,6 +101,10 @@ export default function TreatmentSection() {
               }
             : null
         }
+        availableTreatments={treatments.map((treatment) => ({
+          name: treatment.title,
+          price: treatment.price,
+        }))}
         onClose={() => setSelectedTreatment(null)}
       />
     </section>
