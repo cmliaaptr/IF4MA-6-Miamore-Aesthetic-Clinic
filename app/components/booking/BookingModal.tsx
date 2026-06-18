@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarDays, Check, ChevronDown, Home, MessageCircle, User, X } from "lucide-react";
-import { ChangeEvent, FormEvent, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 
 export type BookingTreatment = {
   name: string;
@@ -47,6 +47,26 @@ type BookingPayload = {
 
 type BookingStep = "form" | "success";
 
+type SelectOption = {
+  label: string;
+  value: string;
+};
+
+type JadwalDokterApiItem = {
+  id_jadwal: number;
+  nama_dokter: string;
+  hari: string;
+  jam_mulai: string;
+  jam_selesai: string;
+  kapasitas: number;
+};
+
+type DoctorApiItem = {
+  id_user: number;
+  username: string;
+  role: string;
+};
+
 type LoggedInCustomer = {
   id_user: number;
   username: string;
@@ -57,8 +77,20 @@ type LoggedInCustomer = {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
-const timeOptions = ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
-const therapistOptions = ["Dr. Marissa", "Dr. Nadine", "Terapis Miamore"];
+const fallbackTimeOptions: SelectOption[] = [
+  { label: "09:00", value: "09:00" },
+  { label: "10:00", value: "10:00" },
+  { label: "11:00", value: "11:00" },
+  { label: "13:00", value: "13:00" },
+  { label: "14:00", value: "14:00" },
+  { label: "15:00", value: "15:00" },
+  { label: "16:00", value: "16:00" },
+];
+const fallbackTherapistOptions: SelectOption[] = [
+  { label: "Dr. Marissa", value: "Dr. Marissa" },
+  { label: "Dr. Nadine", value: "Dr. Nadine" },
+  { label: "Terapis Miamore", value: "Terapis Miamore" },
+];
 const defaultTreatmentOptions: BookingTreatment[] = [
   { name: "Basmi Flek Coba-Coba", price: "Rp. 500.000" },
   { name: "Acne Treatment", price: "Rp. 450.000" },
@@ -120,6 +152,33 @@ function formatDate(date: string) {
   }).format(new Date(`${date}T00:00:00`));
 }
 
+function normalizeTime(time: string) {
+  return time.slice(0, 5);
+}
+
+function getIndonesianDayName(date: string) {
+  if (!date) return "";
+
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: "long",
+  }).format(new Date(`${date}T00:00:00`));
+}
+
+function toUniqueOptions(options: SelectOption[]) {
+  const optionMap = new Map<string, SelectOption>();
+
+  options.forEach((option) => {
+    if (!option.value) return;
+    optionMap.set(option.value, option);
+  });
+
+  return Array.from(optionMap.values());
+}
+
+function parseApiText(text: string) {
+  return JSON.parse(text.replace(/^\/\//, "").trim());
+}
+
 function getLoggedInCustomer(): LoggedInCustomer | null {
   try {
     const rawUser = localStorage.getItem("user");
@@ -178,6 +237,8 @@ export default function BookingModal({
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState("TRD123456789");
+  const [doctorSchedules, setDoctorSchedules] = useState<JadwalDokterApiItem[]>([]);
+  const [doctorOptions, setDoctorOptions] = useState<SelectOption[]>([]);
 
   const treatmentOptions = useMemo(
     () => createTreatmentOptions(selectedTreatment, availableTreatments),
@@ -193,8 +254,98 @@ export default function BookingModal({
     [selectedTreatment?.price, selectedTreatmentOption?.price]
   );
 
+  const filteredSchedules = useMemo(() => {
+    const selectedDay = getIndonesianDayName(formData.bookingDate).toLowerCase();
+
+    if (!selectedDay) return doctorSchedules;
+
+    return doctorSchedules.filter(
+      (schedule) => schedule.hari.toLowerCase() === selectedDay
+    );
+  }, [doctorSchedules, formData.bookingDate]);
+
+  const scheduleSource = filteredSchedules.length > 0 ? filteredSchedules : doctorSchedules;
+
+  const timeOptions = useMemo(() => {
+    const scheduleTimeOptions = scheduleSource.map((schedule) => {
+      const startTime = normalizeTime(schedule.jam_mulai);
+      const endTime = normalizeTime(schedule.jam_selesai);
+
+      return {
+        label: `${startTime} - ${endTime}`,
+        value: startTime,
+      };
+    });
+
+    return scheduleTimeOptions.length > 0
+      ? toUniqueOptions(scheduleTimeOptions)
+      : fallbackTimeOptions;
+  }, [scheduleSource]);
+
+  const therapistOptions = useMemo(() => {
+    const scheduleTherapistOptions = scheduleSource.map((schedule) => ({
+      label: schedule.nama_dokter,
+      value: schedule.nama_dokter,
+    }));
+
+    if (scheduleTherapistOptions.length > 0) {
+      return toUniqueOptions(scheduleTherapistOptions);
+    }
+
+    return doctorOptions.length > 0 ? doctorOptions : fallbackTherapistOptions;
+  }, [doctorOptions, scheduleSource]);
+
   const displayTreatment = formData.treatment || selectedTreatment?.name || "Facial Treatment";
-  const displayTherapist = formData.therapist || "Dr. Marissa";
+  const displayTherapist = formData.therapist || "-";
+
+  useEffect(() => {
+    async function fetchDoctorSchedules() {
+      try {
+        const [scheduleResponse, doctorResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/jadwal-dokter`, {
+            headers: {
+              Accept: "application/json",
+            },
+          }),
+          fetch(`${API_BASE_URL}/api/dokter`, {
+            headers: {
+              Accept: "application/json",
+            },
+          }),
+        ]);
+
+        if (scheduleResponse.ok) {
+          const text = await scheduleResponse.text();
+          const result = parseApiText(text);
+
+          setDoctorSchedules(Array.isArray(result?.data) ? result.data : []);
+        }
+
+        if (doctorResponse.ok) {
+          const text = await doctorResponse.text();
+          const result = parseApiText(text);
+          const doctors = Array.isArray(result?.data) ? (result.data as DoctorApiItem[]) : [];
+
+          setDoctorOptions(
+            toUniqueOptions(
+              doctors
+                .filter((doctor) => doctor.role === "dokter" && doctor.username)
+                .map((doctor) => ({
+                  label: doctor.username,
+                  value: doctor.username,
+                }))
+            )
+          );
+        }
+      } catch (scheduleError) {
+        console.error("Gagal mengambil jadwal dokter", scheduleError);
+      }
+    }
+
+    if (isOpen) {
+      fetchDoctorSchedules();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -457,7 +608,7 @@ function SelectField({
   name: string;
   value: string;
   onChange: (event: ChangeEvent<HTMLSelectElement>) => void;
-  options: BookingTreatment[];
+  options: Array<BookingTreatment | SelectOption>;
   placeholder: string;
 }) {
   return (
@@ -475,8 +626,12 @@ function SelectField({
         >
           <option value="">{placeholder}</option>
           {options.map((option) => (
-            <option key={option.name} value={option.name}>
-              {option.price ? `${option.name} - ${option.price}` : option.name}
+            <option key={"value" in option ? option.value : option.name} value={"value" in option ? option.value : option.name}>
+              {"value" in option
+                ? option.label
+                : option.price
+                  ? `${option.name} - ${option.price}`
+                  : option.name}
             </option>
           ))}
         </select>
