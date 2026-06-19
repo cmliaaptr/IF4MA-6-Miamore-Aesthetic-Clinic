@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 
 type HeroProps = {
   showButton?: boolean;
@@ -36,15 +35,6 @@ export default function Hero({ showButton = true }: HeroProps) {
             Menghadirkan kecantikan alami dengan teknologi modern dan pelayanan
             profesional untuk kulit sehat, glowing, dan percaya diri.
           </p>
-
-          {showButton ? (
-            <Link
-              href="/login"
-              className="mt-8 inline-flex rounded-full bg-yellow-600 px-6 py-3 text-sm font-semibold text-white hover:bg-yellow-700"
-            >
-              Login
-            </Link>
-          ) : null}
         </div>
       </div>
     </section>

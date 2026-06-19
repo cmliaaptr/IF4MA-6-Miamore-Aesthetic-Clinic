@@ -17,6 +17,7 @@ export default function Navbar() {
   const [openProfileMenu, setOpenProfileMenu] = useState(false);
   const [openMobile, setOpenMobile] = useState(false);
   const [isCustomerLoggedIn, setIsCustomerLoggedIn] = useState(false);
+  const logoHref = isCustomerLoggedIn ? "/customer" : "/";
 
   useEffect(() => {
     const checkLoginState = () => {
@@ -49,7 +50,15 @@ export default function Navbar() {
   return (
     <header className="fixed left-0 top-0 z-[9999] w-full px-4 py-3 pointer-events-none">
       <nav className="pointer-events-auto mx-auto flex h-14 max-w-5xl items-center justify-between rounded-full border border-white/30 bg-white/35 px-4 shadow-lg backdrop-blur-xl md:h-16 md:px-6">
-        <Link href="/" className="flex items-center">
+        <Link
+          href={logoHref}
+          onClick={() => {
+            setOpenDropdown(false);
+            setOpenProfileMenu(false);
+            setOpenMobile(false);
+          }}
+          className="flex items-center"
+        >
           <Image
             src="/logo.png"
             alt="Logo Miamore"

@@ -90,6 +90,40 @@ class AuthController extends Controller
         ]);
     }
 
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'id_user' => 'required|integer|exists:users,id_user',
+            'role' => 'required|in:admin,pelanggan,dokter',
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = User::where('id_user', $request->id_user)
+            ->where('role', $request->role)
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User tidak ditemukan'
+            ], 404);
+        }
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'Password saat ini salah'
+            ], 422);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return response()->json([
+            'message' => 'Password berhasil diubah'
+        ]);
+    }
+
     public function getDoctors()
     {
         $dokter = User::where('role', 'dokter')
