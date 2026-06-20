@@ -12,14 +12,14 @@ class JadwalDokterController extends Controller
     {
         return response()->json([
             'message' => 'Data jadwal dokter berhasil diambil',
-            'data' => JadwalDokter::all()
+            'data' => JadwalDokter::with('dokter')->get()
         ]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'nama_dokter' => 'required|string|max:255',
+            'id_dokter' => 'required|exists:users,id_user',
             'hari' => 'required|string|max:50',
             'jam_mulai' => 'required',
             'jam_selesai' => 'required',
@@ -27,7 +27,7 @@ class JadwalDokterController extends Controller
         ]);
 
         $jadwal = JadwalDokter::create([
-            'nama_dokter' => $request->nama_dokter,
+            'id_dokter' => $request->id_dokter,
             'hari' => $request->hari,
             'jam_mulai' => $request->jam_mulai,
             'jam_selesai' => $request->jam_selesai,
@@ -66,7 +66,7 @@ class JadwalDokterController extends Controller
         }
 
         $request->validate([
-            'nama_dokter' => 'required|string|max:255',
+            'id_dokter' => 'required|exists:users,id_user',
             'hari' => 'required|string|max:50',
             'jam_mulai' => 'required',
             'jam_selesai' => 'required',
@@ -74,7 +74,7 @@ class JadwalDokterController extends Controller
         ]);
 
         $jadwal->update([
-            'nama_dokter' => $request->nama_dokter,
+            'id_dokter' => $request->id_dokter,
             'hari' => $request->hari,
             'jam_mulai' => $request->jam_mulai,
             'jam_selesai' => $request->jam_selesai,

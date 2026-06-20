@@ -13,15 +13,29 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useState, useEffect } from "react";
 
 type StaffProfilePageProps = {
+  userId: number;
   title: string;
   breadcrumbRoot: string;
   name: string;
   role: string;
   summary: string;
   initials: string;
+  phone: string;
+  email: string;
+  address: string;
+};
+
+type Props = {
+  userId: number;
+  title: string;
+  breadcrumbRoot: string;
+  name: string;
+  role: string;
+  initials: string;
+  summary: string;
   phone: string;
   email: string;
   address: string;
@@ -56,6 +70,7 @@ const initialPasswordForm: PasswordForm = {
 };
 
 export default function StaffProfilePage({
+  userId,
   title,
   breadcrumbRoot,
   name,
@@ -66,6 +81,19 @@ export default function StaffProfilePage({
   email,
   address,
 }: StaffProfilePageProps) {
+  useEffect(() => {
+    const updateProfile = {
+      name,
+      summary,
+      phone,
+      email,
+      address,
+    };
+
+    setProfile(updateProfile);
+    setDraftProfile(updateProfile);
+  }, [name, summary, phone, email, address]);
+
   const [profile, setProfile] = useState<EditableProfile>({
     name,
     summary,
@@ -128,7 +156,7 @@ export default function StaffProfilePage({
   };
 
   const handleDraftChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name: fieldName, value } = event.target;
     setDraftProfile((current) => ({ ...current, [fieldName]: value }));
@@ -141,10 +169,49 @@ export default function StaffProfilePage({
     setPasswordMessage("");
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setProfile(draftProfile);
-    setIsEditing(false);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/profile/${userId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          username: draftProfile.name,
+          email: draftProfile.email,
+        }),
+      });
+
+      const text = await response.text();
+
+      console.log("PROFILE RESPONSE:", text);
+
+      const result = JSON.parse(text.replace(/^\/\//, "").trim());
+
+      if (!response.ok) {
+        throw new Error(result.message || "Gagal update profile");
+      }
+
+      setProfile(draftProfile);
+
+      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...currentUser,
+          username: draftProfile.name,
+          email: draftProfile.email,
+        }),
+      );
+
+      setIsEditing(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleSubmitPassword = async (event: FormEvent<HTMLFormElement>) => {
@@ -209,7 +276,7 @@ export default function StaffProfilePage({
       setPasswordError(
         error instanceof Error
           ? error.message
-          : "Password gagal diubah. Silakan coba lagi."
+          : "Password gagal diubah. Silakan coba lagi.",
       );
     } finally {
       setIsSubmittingPassword(false);
@@ -262,7 +329,9 @@ export default function StaffProfilePage({
         </div>
 
         <div className="mt-8 rounded-lg border border-neutral-100 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.08)] md:p-10">
-          <h3 className="text-xl font-bold text-neutral-950">Informasi Pribadi</h3>
+          <h3 className="text-xl font-bold text-neutral-950">
+            Informasi Pribadi
+          </h3>
 
           <div className="mt-7 divide-y divide-neutral-200">
             {info.map((item) => (
@@ -423,7 +492,10 @@ export default function StaffProfilePage({
               </button>
             </div>
 
-            <form onSubmit={handleSubmitPassword} className="space-y-5 px-6 py-6">
+            <form
+              onSubmit={handleSubmitPassword}
+              className="space-y-5 px-6 py-6"
+            >
               <PasswordInput
                 label="Password Saat Ini"
                 name="currentPassword"

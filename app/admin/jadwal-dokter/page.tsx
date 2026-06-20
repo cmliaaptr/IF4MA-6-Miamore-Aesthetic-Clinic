@@ -9,7 +9,7 @@ import SuccessModal from "../../components/admin/SuccessModal";
 import type { DoctorScheduleItem } from "@/types/dashboard";
 
 type DoctorScheduleFormData = {
-  doctorName: string;
+  doctorId: number;
   day: string;
   startTime: string;
   endTime: string;
@@ -41,14 +41,15 @@ export default function JadwalDokterPage() {
 
       const text = await response.text();
       console.log("RAW:", text);
-
+      console.log("STATUS:", response.status);
       const result = JSON.parse(text.replace(/^\/\//, ""));
       console.log(result);
 
       setSchedules(
         result.data.map((item: any) => ({
           id: item.id_jadwal,
-          doctorName: item.nama_dokter,
+          doctorId: item.id_dokter,
+          doctorName: item.dokter?.username ?? "'",
           day: item.hari,
           startTime: item.jam_mulai,
           endTime: item.jam_selesai,
@@ -83,7 +84,7 @@ export default function JadwalDokterPage() {
           },
 
           body: JSON.stringify({
-            nama_dokter: data.doctorName,
+            id_dokter: data.doctorId,
             hari: data.day,
             jam_mulai: data.startTime,
             jam_selesai: data.endTime,
@@ -138,7 +139,7 @@ export default function JadwalDokterPage() {
           },
 
           body: JSON.stringify({
-            nama_dokter: data.doctorName,
+            id_dokter: data.doctorId,
             hari: data.day,
             jam_mulai: data.startTime,
             jam_selesai: data.endTime,

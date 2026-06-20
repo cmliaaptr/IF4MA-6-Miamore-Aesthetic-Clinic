@@ -9,7 +9,6 @@ export default function AdminHeader() {
         <ProfileDropdown
           name="Admin"
           profileHref="/admin/profile"
-          settingsHref="/admin/settings"
         />
       </div>
     </header>

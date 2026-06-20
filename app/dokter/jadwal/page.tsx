@@ -1,17 +1,49 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 import DoctorScheduleTable, {
   type DoctorSchedule,
 } from "../../components/dokter/jadwal/DoctorScheduleTable";
 
-const schedules: DoctorSchedule[] = [
-  { id: 1, day: "Senin", startTime: "Off", endTime: "Off", capacityPerHour: 0 },
-  { id: 2, day: "Selasa", startTime: "10:00", endTime: "18:00", capacityPerHour: 5 },
-  { id: 3, day: "Rabu", startTime: "10:00", endTime: "18:00", capacityPerHour: 5 },
-  { id: 4, day: "Kamis", startTime: "10:00", endTime: "18:00", capacityPerHour: 5 },
-  { id: 5, day: "Jumat", startTime: "10:00", endTime: "18:00", capacityPerHour: 5 },
-  { id: 6, day: "Sabtu", startTime: "10:00", endTime: "18:00", capacityPerHour: 5 },
-];
-
 export default function DokterJadwalPage() {
+  const [schedules, setSchedules] =
+    useState<DoctorSchedule[]>([]);
+
+  useEffect(() => {
+    fetchSchedules();
+  }, []);
+
+  const fetchSchedules = async () => {
+    try {
+      const user = JSON.parse(
+        localStorage.getItem("user") || "{}"
+      );
+
+      if (!user.id_user) return;
+
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/jadwal-dokter/dokter/${user.id_user}`
+      );
+
+      const result =
+        await response.json();
+
+      setSchedules(
+        result.data.map((item: any) => ({
+          id: item.id_jadwal,
+          day: item.hari,
+          startTime: item.jam_mulai,
+          endTime: item.jam_selesai,
+          capacityPerHour:
+            item.kapasitas,
+        }))
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <section className="mx-auto max-w-6xl">
       <h1 className="text-4xl font-bold tracking-normal md:text-[42px]">
@@ -19,7 +51,9 @@ export default function DokterJadwalPage() {
       </h1>
 
       <div className="mt-7">
-        <DoctorScheduleTable data={schedules} />
+        <DoctorScheduleTable
+          data={schedules}
+        />
       </div>
     </section>
   );

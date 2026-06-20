@@ -16,6 +16,12 @@ return new class extends Migration
             $table->time('jam_selesai');
             $table->integer('kapasitas');
             $table->timestamps();
+            $table->unsignedBigInteger('id_dokter');
+
+            $table->foreign('id_dokter')
+                ->references('id_user')
+                ->on('users')
+                ->onDelete('cascade');
         });
     }
 

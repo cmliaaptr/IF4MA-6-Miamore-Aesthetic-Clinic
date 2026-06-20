@@ -124,13 +124,50 @@ class AuthController extends Controller
         ]);
     }
 
-    public function getDoctors()
+    public function profile($id)
     {
-        $dokter = User::where('role', 'dokter')
-            ->get();
+        $user = User::findOrFail($id);
 
         return response()->json([
-            'data' => $dokter
+            'data' => $user
         ]);
+    }
+
+    public function updateProfile(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'username' => 'required|string|max:255',
+            'email' => 'required|email',
+        ]);
+
+        $user->update([
+            'username' => $request->username,
+            'email' => $request->email,
+        ]);
+
+        return response()->json([
+            'message' => 'Profile berhasil diperbarui',
+            'data' => $user
+        ]);
+    }
+
+    public function getDoctors()
+    {
+        try {
+            $doctors = User::where('role', 'dokter')->get();
+
+            return response()->json([
+                'data' => $doctors->map(fn($doctor) => [
+                    'id_user' => $doctor->id_user,
+                    'username' => $doctor->username,
+                ])
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

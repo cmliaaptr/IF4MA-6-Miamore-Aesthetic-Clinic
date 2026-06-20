@@ -110,32 +110,15 @@ export const customerList: CustomerItem[] = [
 ];
 
 // Data jadwal dokter
-export const doctorScheduleList: DoctorScheduleItem[] = [
-  {
-    id: 1,
-    doctorName: "Dr. Rani",
-    day: "Senin",
-    startTime: "09:00",
-    endTime: "15:00",
-    capacityPerHour: 3,
-  },
-  {
-    id: 2,
-    doctorName: "Dr. Maya",
-    day: "Selasa",
-    startTime: "10:00",
-    endTime: "16:00",
-    capacityPerHour: 3,
-  },
-  {
-    id: 3,
-    doctorName: "Dr. Andi",
-    day: "Rabu",
-    startTime: "08:00",
-    endTime: "14:00",
-    capacityPerHour: 2,
-  },
-];
+export type DoctorScheduleItem = {
+  id: number;
+  doctorId: number;
+  doctorName: string;
+  day: string;
+  startTime: string;
+  endTime: string;
+  capacityPerHour: number;
+};
 
 // Data booking halaman booking
 export const bookingPageList: BookingPageItem[] = [
