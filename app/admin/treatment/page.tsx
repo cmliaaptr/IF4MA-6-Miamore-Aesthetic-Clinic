@@ -11,10 +11,19 @@ import type { TreatmentItem } from "@/types/dashboard";
 type TreatmentFormData = {
   nama_treatment: string;
   harga: string;
-  diskon: string;
   durasi: string;
   foto: string;
   deskripsi: string;
+};
+
+type TreatmentApiItem = {
+  id_treatment: number;
+  nama_treatment: string;
+  deskripsi: string;
+  foto: string;
+  harga: string;
+  diskon: string;
+  durasi: string;
 };
 
 export default function TreatmentPage() {
@@ -47,7 +56,7 @@ export default function TreatmentPage() {
           nama_treatment: data.nama_treatment,
           deskripsi: data.deskripsi,
           harga: data.harga,
-          diskon: data.diskon,
+          diskon: 0,
           durasi: data.durasi,
           foto: data.foto,
         }),
@@ -72,30 +81,42 @@ export default function TreatmentPage() {
     setIsEditOpen(true);
   };
 
-  const handleEditTreatment = (data: TreatmentFormData) => {
+  const handleEditTreatment = async (data: TreatmentFormData) => {
     if (!selectedTreatment) return;
 
-    setTreatments((prev) =>
-      prev.map((item) =>
-        item.id === selectedTreatment.id
-          ? {
-              ...item,
-              name: data.nama_treatment,
-              description: data.deskripsi,
-              photo: data.foto,
-              price: data.harga,
-              discount: data.diskon,
-              duration: data.durasi,
-            }
-          : item,
-      ),
-    );
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/treatments/${selectedTreatment.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            nama_treatment: data.nama_treatment,
+            deskripsi: data.deskripsi,
+            harga: data.harga,
+            diskon: selectedTreatment.discount || 0,
+            durasi: data.durasi,
+            foto: data.foto,
+          }),
+        },
+      );
 
-    setIsEditOpen(false);
-    setSelectedTreatment(null);
+      if (!response.ok) {
+        throw new Error("Gagal mengubah treatment");
+      }
 
-    setSuccessMessage("Data treatment berhasil diubah.");
-    setIsSuccessOpen(true);
+      await fetchTreatments();
+
+      setIsEditOpen(false);
+      setSelectedTreatment(null);
+      setSuccessMessage("Data treatment berhasil diubah.");
+      setIsSuccessOpen(true);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleOpenDeleteModal = (item: TreatmentItem) => {
@@ -140,7 +161,7 @@ export default function TreatmentPage() {
       console.log(result);
 
       setTreatments(
-        result.data.map((item: any) => ({
+        result.data.map((item: TreatmentApiItem) => ({
           id: item.id_treatment,
           name: item.nama_treatment,
           description: item.deskripsi,

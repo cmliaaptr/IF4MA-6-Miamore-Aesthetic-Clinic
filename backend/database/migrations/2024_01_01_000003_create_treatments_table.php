@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('foto')->nullable();
             $table->decimal('harga', 10, 2);
             $table->decimal('diskon', 5, 2)->default(0);
-            $table->integer('durasi');
+            $table->string('durasi');
             $table->timestamps();
         });
     }

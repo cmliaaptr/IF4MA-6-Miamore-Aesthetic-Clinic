@@ -8,7 +8,6 @@ import type { TreatmentItem } from "@/types/dashboard";
 type TreatmentFormData = {
   nama_treatment: string;
   harga: string;
-  diskon: string;
   durasi: string;
   foto: string;
   deskripsi: string;
@@ -25,7 +24,6 @@ type TreatmentFormModalProps = {
 const initialFormValue: TreatmentFormData = {
   nama_treatment: "",
   harga: "",
-  diskon: "",
   durasi: "",
   foto: "",
   deskripsi: "",
@@ -41,12 +39,12 @@ export default function TreatmentFormModal({
   const [formData, setFormData] =
     useState<TreatmentFormData>(initialFormValue);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (mode === "edit" && initialData) {
       setFormData({
         nama_treatment: initialData.name,
         harga: String(initialData.price),
-        diskon: String(initialData.discount),
         durasi: String(initialData.duration),
         foto: initialData.photo,
         deskripsi: initialData.description,
@@ -55,6 +53,7 @@ export default function TreatmentFormModal({
       setFormData(initialFormValue);
     }
   }, [mode, initialData, isOpen]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleChange = (
     e: ChangeEvent<
@@ -102,16 +101,9 @@ export default function TreatmentFormModal({
       return;
     }
 
-    if (!formData.diskon.trim()) {
-      toast.error(
-        "Diskon wajib diisi"
-      );
-      return;
-    }
-
     if (!formData.durasi.trim()) {
       toast.error(
-        "Durasi wajib diisi"
+        "Waktu treatment wajib diisi"
       );
       return;
     }
@@ -186,31 +178,17 @@ export default function TreatmentFormModal({
           />
         </div>
 
-        {/* Diskon */}
-        <div className="form-group">
-          <label htmlFor="diskon">
-            Diskon (%)
-          </label>
-
-          <input
-            id="diskon"
-            name="diskon"
-            type="number"
-            value={formData.diskon}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Durasi */}
+        {/* Waktu Treatment */}
         <div className="form-group">
           <label htmlFor="durasi">
-            Durasi (Menit)
+            Waktu Treatment
           </label>
 
           <input
             id="durasi"
             name="durasi"
-            type="number"
+            type="text"
+            placeholder="Contoh: 1x / Bulan atau 2x / Minggu"
             value={formData.durasi}
             onChange={handleChange}
           />

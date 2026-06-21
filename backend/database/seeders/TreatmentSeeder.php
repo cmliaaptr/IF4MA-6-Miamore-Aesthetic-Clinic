@@ -19,7 +19,7 @@ class TreatmentSeeder extends Seeder
             'foto' => 'https://via.placeholder.com/300',
             'harga' => 150000,
             'diskon' => 10,
-            'durasi' => 60,
+            'durasi' => '1x / Bulan',
         ]);
 
         Treatment::create([
@@ -28,7 +28,7 @@ class TreatmentSeeder extends Seeder
             'foto' => 'https://via.placeholder.com/300',
             'harga' => 250000,
             'diskon' => 5,
-            'durasi' => 45,
+            'durasi' => '2x / Bulan',
         ]);
 
         Treatment::create([
@@ -37,7 +37,7 @@ class TreatmentSeeder extends Seeder
             'foto' => 'https://via.placeholder.com/300',
             'harga' => 300000,
             'diskon' => 0,
-            'durasi' => 50,
+            'durasi' => '1x / Minggu',
         ]);
 
         Treatment::create([
@@ -46,7 +46,7 @@ class TreatmentSeeder extends Seeder
             'foto' => 'https://via.placeholder.com/300',
             'harga' => 500000,
             'diskon' => 15,
-            'durasi' => 90,
+            'durasi' => '1x / Bulan',
         ]);
 
         Treatment::create([
@@ -55,7 +55,7 @@ class TreatmentSeeder extends Seeder
             'foto' => 'https://via.placeholder.com/300',
             'harga' => 1000000,
             'diskon' => 20,
-            'durasi' => 30,
+            'durasi' => 'Setiap 3 Bulan',
         ]);
     }
 }

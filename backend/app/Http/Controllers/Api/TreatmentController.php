@@ -32,7 +32,7 @@ class TreatmentController extends Controller
             'foto' => 'nullable|string',
             'harga' => 'required|numeric',
             'diskon' => 'nullable|numeric',
-            'durasi' => 'required|integer',
+            'durasi' => 'required|string|max:100',
         ]);
 
         $treatment = Treatment::create([
@@ -85,7 +85,7 @@ class TreatmentController extends Controller
             'nama_treatment' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'harga' => 'required|numeric',
-            'durasi' => 'required|integer',
+            'durasi' => 'required|string|max:100',
             'foto' => 'nullable|string',
             'diskon' => 'nullable|numeric',
         ]);

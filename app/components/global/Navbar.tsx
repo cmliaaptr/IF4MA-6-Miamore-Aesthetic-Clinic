@@ -100,11 +100,9 @@ export default function Navbar() {
             <Link href="/promo">Promo</Link>
           </li>
 
-          {isCustomerLoggedIn && (
-            <li>
-              <Link href="/profile">Profile</Link>
-            </li>
-          )}
+          <li>
+            <Link href="/profile">Profile</Link>
+          </li>
 
           <li>
             <Link href="/riwayat">Riwayat</Link>
@@ -141,12 +139,12 @@ export default function Navbar() {
           {isCustomerLoggedIn && openProfileMenu && (
             <div className="absolute right-0 top-12 z-[10000] w-48 rounded-2xl border border-white/30 bg-white/95 p-2 text-sm font-semibold text-neutral-800 shadow-xl backdrop-blur-xl">
               <Link
-                href="/profile"
+                href="/customer/profile"
                 onClick={() => setOpenProfileMenu(false)}
                 className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-yellow-100"
               >
                 <User size={17} />
-                Profile
+                Profile Saya
               </Link>
 
               <Link
@@ -195,15 +193,23 @@ export default function Navbar() {
               Promo
             </Link>
 
+            <Link
+              href="/profile"
+              onClick={() => setOpenMobile(false)}
+              className="block rounded-xl px-3 py-2"
+            >
+              Profile
+            </Link>
+
             {isCustomerLoggedIn && (
               <>
                 <Link
-                  href="/profile"
+                  href="/customer/profile"
                   onClick={() => setOpenMobile(false)}
                   className="flex items-center gap-3 rounded-xl px-3 py-2"
                 >
                   <User size={17} />
-                  Profile
+                  Profile Saya
                 </Link>
 
                 <Link

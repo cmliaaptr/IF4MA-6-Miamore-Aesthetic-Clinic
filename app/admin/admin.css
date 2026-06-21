@@ -335,6 +335,31 @@
   vertical-align: top;
 }
 
+.treatment-description-cell {
+  max-width: 260px;
+  text-align: left;
+  line-height: 1.5;
+}
+
+.treatment-table-image {
+  width: 120px;
+  height: 76px;
+  border-radius: 10px;
+  object-fit: cover;
+  background-color: #f3f3f3;
+}
+
+.treatment-price-label {
+  display: block;
+  margin-bottom: 4px;
+  color: #777777;
+  font-size: 12px;
+}
+
+.treatment-table strong {
+  font-weight: 700;
+}
+
 /* =========================
    STATUS BADGE
 ========================= */
