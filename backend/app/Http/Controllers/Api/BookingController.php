@@ -75,6 +75,32 @@ class BookingController extends Controller
         ]);
     }
 
+    public function confirmPayment(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'metode_pembayaran' => 'required|string|max:50',
+        ]);
+
+        $booking = Booking::find($id);
+
+        if (!$booking) {
+            return response()->json([
+                'message' => 'Booking tidak ditemukan',
+            ], 404);
+        }
+
+        $booking->update([
+            'metode_pembayaran' => $validated['metode_pembayaran'],
+            'status_booking' => 'Terkonfirmasi',
+            'status_pembayaran' => 'Lunas',
+        ]);
+
+        return response()->json([
+            'message' => 'Pembayaran berhasil dikonfirmasi',
+            'data' => $booking->load('pelanggan:id_user,username,email,role'),
+        ]);
+    }
+
     private function generateOrderId(): string
     {
         do {

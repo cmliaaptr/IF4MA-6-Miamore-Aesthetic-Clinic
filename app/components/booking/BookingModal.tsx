@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Check, ChevronDown, Home, MessageCircle, User, X } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Home, MessageCircle, ShieldCheck, User, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 
 export type BookingTreatment = {
@@ -43,9 +43,10 @@ type BookingPayload = {
   dokter_terapis?: string;
   catatan?: string;
   total_pembayaran?: number;
+  metode_pembayaran?: string;
 };
 
-type BookingStep = "form" | "success";
+type BookingStep = "form" | "payment" | "success";
 
 type SelectOption = {
   label: string;
@@ -152,6 +153,28 @@ function formatDate(date: string) {
   }).format(new Date(`${date}T00:00:00`));
 }
 
+function formatDateTime(date: string) {
+  if (!date) return "-";
+
+  const formattedDate = new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(date));
+
+  return `${formattedDate.replace(".", ":")} WIB`;
+}
+
+function formatTimer(seconds: number) {
+  const minutes = Math.floor(seconds / 60).toString().padStart(2, "0");
+  const remainingSeconds = (seconds % 60).toString().padStart(2, "0");
+
+  return `${minutes}:${remainingSeconds}`;
+}
+
 function normalizeTime(time: string) {
   return time.slice(0, 5);
 }
@@ -223,6 +246,7 @@ function createPayload(
     dokter_terapis: form.therapist || undefined,
     catatan: form.notes || undefined,
     total_pembayaran: totalPayment,
+    metode_pembayaran: "QRIS",
   };
 }
 
@@ -237,8 +261,11 @@ export default function BookingModal({
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState("TRD123456789");
+  const [bookingId, setBookingId] = useState<number | null>(null);
   const [doctorSchedules, setDoctorSchedules] = useState<JadwalDokterApiItem[]>([]);
   const [doctorOptions, setDoctorOptions] = useState<SelectOption[]>([]);
+  const [paymentSeconds, setPaymentSeconds] = useState(15 * 60);
+  const [paymentCompletedAt, setPaymentCompletedAt] = useState("");
 
   const treatmentOptions = useMemo(
     () => createTreatmentOptions(selectedTreatment, availableTreatments),
@@ -347,12 +374,25 @@ export default function BookingModal({
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (step !== "payment") return;
+
+    const timer = window.setInterval(() => {
+      setPaymentSeconds((seconds) => Math.max(seconds - 1, 0));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [step]);
+
   if (!isOpen) return null;
 
   const handleClose = () => {
     setStep("form");
     setError("");
     setIsSubmitting(false);
+    setBookingId(null);
+    setPaymentSeconds(15 * 60);
+    setPaymentCompletedAt("");
     setFormData(initialForm);
     onClose();
   };
@@ -405,12 +445,53 @@ export default function BookingModal({
       }
 
       setOrderId(result?.data?.order_id || result?.order_id || orderId);
-      setStep("success");
+      setBookingId(typeof result?.data?.id_booking === "number" ? result.data.id_booking : null);
+      setPaymentSeconds(15 * 60);
+      setStep("payment");
     } catch (submitError) {
       setError(
         submitError instanceof Error
           ? submitError.message
           : "Booking gagal dibuat. Silakan coba lagi."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    setError("");
+
+    if (!bookingId) {
+      setError("Data booking tidak ditemukan. Silakan ulangi booking.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}/payment`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ metode_pembayaran: "QRIS" }),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(result?.message || "Pembayaran gagal dikonfirmasi.");
+      }
+
+      setPaymentCompletedAt(new Date().toISOString());
+      setStep("success");
+    } catch (paymentError) {
+      setError(
+        paymentError instanceof Error
+          ? paymentError.message
+          : "Pembayaran gagal dikonfirmasi. Silakan coba lagi."
       );
     } finally {
       setIsSubmitting(false);
@@ -495,9 +576,23 @@ export default function BookingModal({
                 disabled={isSubmitting}
                 className="w-full rounded-full bg-[#17a900] px-5 py-3 text-lg font-bold text-white hover:bg-[#148f00] disabled:cursor-not-allowed disabled:bg-neutral-400 md:text-xl"
               >
-                {isSubmitting ? "Memproses..." : "Booking Sekarang"}
+                {isSubmitting ? "Memproses..." : "Lanjutkan ke Pembayaran"}
               </button>
             </form>
+          )}
+
+          {step === "payment" && (
+            <PaymentStep
+              orderId={orderId}
+              totalPayment={totalPayment}
+              treatment={displayTreatment}
+              therapist={displayTherapist}
+              formData={formData}
+              paymentSeconds={paymentSeconds}
+              error={error}
+              isSubmitting={isSubmitting}
+              onConfirmPayment={handleConfirmPayment}
+            />
           )}
 
           {step === "success" && (
@@ -507,6 +602,7 @@ export default function BookingModal({
               treatment={displayTreatment}
               therapist={displayTherapist}
               formData={formData}
+              paymentCompletedAt={paymentCompletedAt}
               onClose={handleClose}
             />
           )}
@@ -683,12 +779,141 @@ function InfoRow({ label, value, strong = false }: { label: string; value: strin
   );
 }
 
+function PaymentStep({
+  formData,
+  treatment,
+  therapist,
+  totalPayment,
+  orderId,
+  paymentSeconds,
+  error,
+  isSubmitting,
+  onConfirmPayment,
+}: {
+  formData: BookingFormData;
+  treatment: string;
+  therapist: string;
+  totalPayment: number;
+  orderId: string;
+  paymentSeconds: number;
+  error: string;
+  isSubmitting: boolean;
+  onConfirmPayment: () => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <header>
+        <h2 className="text-3xl font-bold text-[#bf9130] md:text-5xl">
+          Pembayaran
+        </h2>
+      </header>
+
+      <BookingInfo
+        formData={formData}
+        treatment={treatment}
+        therapist={therapist}
+        totalPayment={totalPayment}
+      />
+
+      <section className="rounded-2xl bg-[#fbf7f7] p-4 shadow-[0_0_14px_rgba(0,0,0,0.16)] md:p-5">
+        <p className="text-sm text-neutral-800">
+          Scan QRIS dibawah ini menggunakan pembayaran favorit anda
+        </p>
+
+        <div className="mt-4 flex justify-center">
+          <div className="rounded-md border border-neutral-900 bg-white px-8 py-3 text-center">
+            <p className="text-xs font-bold leading-tight">QRIS</p>
+            <p className="text-[10px] leading-tight">QR Code Standar Pembayaran Nasional</p>
+            <QrisCode />
+            <p className="mt-2 text-sm">Order ID : {orderId}</p>
+          </div>
+        </div>
+
+        <div className="mx-auto mt-4 max-w-lg rounded-lg border border-neutral-900 px-3 py-2 text-center">
+          <p className="text-sm">Mendukung aplikasi pembayaran :</p>
+          <PaymentMethodBadges />
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 rounded-lg border border-neutral-900 p-3">
+          <div>
+            <p className="text-sm font-semibold">Total Bayar</p>
+            <p className="text-2xl font-bold">{formatRupiah(totalPayment)}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-semibold">Sisa Waktu Pembayaran</p>
+            <p className="text-2xl font-bold">{formatTimer(paymentSeconds)}</p>
+          </div>
+        </div>
+
+        <div className="mt-5 flex gap-3 text-sm text-neutral-900">
+          <ShieldCheck className="mt-0.5 shrink-0 text-neutral-600" size={30} />
+          <p>
+            Setelah pembayaran berhasil, status booking akan otomatis diperbarui.
+            Jangan tutup pembayaran ini sebelum pembayaran terverifikasi.
+          </p>
+        </div>
+
+        {error && <p className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">{error}</p>}
+
+        <button
+          type="button"
+          onClick={onConfirmPayment}
+          disabled={isSubmitting}
+          className="mt-5 w-full rounded-full bg-[#17a900] px-5 py-3 text-lg font-bold text-white hover:bg-[#148f00] disabled:cursor-not-allowed disabled:bg-neutral-400"
+        >
+          {isSubmitting ? "Memverifikasi..." : "Saya Sudah Bayar"}
+        </button>
+      </section>
+    </div>
+  );
+}
+
+function QrisCode() {
+  const activeCells = new Set([
+    0, 1, 2, 3, 4, 5, 6, 9, 10, 12, 13, 19, 22, 24, 26, 28, 30, 32, 34, 36,
+    39, 40, 41, 42, 43, 44, 45, 48, 50, 52, 54, 56, 58, 60, 65, 66, 68, 70,
+    73, 75, 77, 78, 80, 82, 84, 86, 88, 91, 92, 95, 96, 98, 100, 102, 104,
+    106, 108, 110, 112, 114, 116, 117, 118, 119, 120, 123, 125, 127, 129,
+    131, 133, 136, 138, 140, 142, 144, 146, 148, 150, 152, 156, 157, 158,
+    159, 160, 161, 162, 164, 166, 168,
+  ]);
+
+  return (
+    <div className="mx-auto mt-3 grid h-40 w-40 grid-cols-[repeat(13,1fr)] grid-rows-[repeat(13,1fr)] gap-0.5 bg-white p-2">
+      {Array.from({ length: 169 }).map((_, index) => (
+        <span
+          key={index}
+          className={activeCells.has(index) ? "bg-black" : "bg-white"}
+        />
+      ))}
+    </div>
+  );
+}
+
+function PaymentMethodBadges() {
+  const methods = ["BCA", "BRI", "DANA", "OVO", "GoPay", "Shopee", "LinkAja"];
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+      {methods.map((method) => (
+        <span
+          key={method}
+          className="rounded-md bg-white px-2 py-1 text-xs font-bold text-[#1f65c9] shadow-sm ring-1 ring-neutral-200"
+        >
+          {method}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function SuccessStep({
   formData,
   treatment,
   therapist,
   totalPayment,
   orderId,
+  paymentCompletedAt,
   onClose,
 }: {
   formData: BookingFormData;
@@ -696,6 +921,7 @@ function SuccessStep({
   therapist: string;
   totalPayment: number;
   orderId: string;
+  paymentCompletedAt: string;
   onClose: () => void;
 }) {
   return (
@@ -704,12 +930,41 @@ function SuccessStep({
         <Check size={38} strokeWidth={4} />
       </div>
       <div>
-        <h2 className="text-xl font-semibold text-[#37b400]">Booking Berhasil!</h2>
-        <p className="text-lg font-medium">Booking Anda sudah masuk ke sistem.</p>
+        <h2 className="text-xl font-semibold text-[#37b400]">Pembayaran Berhasil!</h2>
+        <p className="text-lg font-medium">Booking Anda telah dikonfirmasi.</p>
       </div>
 
       <div className="text-left">
-        <BookingInfo formData={formData} treatment={treatment} therapist={therapist} totalPayment={totalPayment} compact />
+        <div className="rounded-2xl bg-[#fbf7f7] p-4 shadow-[0_0_14px_rgba(0,0,0,0.16)] md:p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <CalendarDays size={34} className="text-neutral-500" />
+            <h3 className="text-2xl font-bold">Detail Booking</h3>
+          </div>
+          <div className="space-y-2 text-sm">
+            <InfoRow label="Nama" value={formData.fullName || "-"} />
+            <InfoRow label="Treatment" value={treatment} />
+            <InfoRow label="Dokter / Terapis" value={therapist} />
+            <InfoRow label="Tanggal" value={formatDate(formData.bookingDate)} />
+            <InfoRow label="Jam" value={formData.bookingTime || "-"} />
+          </div>
+          <div className="my-5 border-t border-neutral-300" />
+          <div className="space-y-2 text-sm">
+            <InfoRow label="Total Pembayaran" value={formatRupiah(totalPayment)} strong />
+            <div className="grid grid-cols-[110px_8px_1fr] gap-2">
+              <span>Status Booking</span>
+              <span>:</span>
+              <span>
+                <span className="rounded border border-[#43b400] px-2 py-0.5 text-xs text-neutral-800">
+                  Terkonfirmasi
+                </span>
+              </span>
+            </div>
+            <InfoRow label="Metode Pembayaran" value="QRIS" strong />
+            <InfoRow label="Order ID" value={orderId} />
+            <InfoRow label="Waktu Pembayaran" value={formatDateTime(paymentCompletedAt)} />
+          </div>
+        </div>
+
         <div className="mt-4 rounded-2xl bg-[#fbf7f7] p-4 text-left shadow-[0_0_14px_rgba(0,0,0,0.16)]">
           <div className="flex items-center gap-3 text-lg font-medium">
             <CalendarDays className="text-neutral-500" size={34} />
@@ -717,11 +972,6 @@ function SuccessStep({
           </div>
           <p className="mt-5 text-sm">Mohon hadir 10 menit sebelum jadwal treatment</p>
           <p className="mt-5 text-sm">Terima kasih telah mempercayakan perawatan anda di Miamore Aesthetic Clinic</p>
-          <div className="mt-5 space-y-2 text-sm">
-            <InfoRow label="Status Booking" value="Booking" />
-            <InfoRow label="Status Bayar" value="Belum Dibayar" strong />
-            <InfoRow label="Order ID" value={orderId} />
-          </div>
         </div>
       </div>
 
