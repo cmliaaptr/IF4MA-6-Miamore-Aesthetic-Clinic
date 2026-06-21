@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import BookingModal from "../booking/BookingModal";
 
 const treatments = [
@@ -44,8 +46,40 @@ type Treatment = {
 };
 
 export default function TreatmentSection() {
+  const router = useRouter();
+
   const [selectedTreatment, setSelectedTreatment] =
     useState<Treatment | null>(null);
+
+  const handleBooking = (item: Treatment) => {
+    const user = localStorage.getItem("user");
+
+    // Belum login
+    if (!user) {
+      toast.error("Silakan login terlebih dahulu");
+
+      localStorage.setItem(
+        "redirectAfterLogin",
+        window.location.pathname
+      );
+
+      router.push("/login");
+      return;
+    }
+
+    const parsedUser = JSON.parse(user);
+
+    // Hanya pelanggan yang boleh booking
+    if (parsedUser.role !== "pelanggan") {
+      toast.error(
+        "Booking hanya dapat dilakukan oleh pelanggan"
+      );
+      return;
+    }
+
+    // Buka modal booking
+    setSelectedTreatment(item);
+  };
 
   return (
     <section className="overflow-hidden bg-orange-600 px-5 py-16 text-white md:px-10 md:py-20 lg:px-20">
@@ -75,7 +109,7 @@ export default function TreatmentSection() {
                 title={item.title}
                 desc={item.desc}
                 image={item.image}
-                onBooking={() => setSelectedTreatment(item)}
+                onBooking={() => handleBooking(item)}
               />
             ))}
           </div>
@@ -85,7 +119,9 @@ export default function TreatmentSection() {
       <BookingModal
         isOpen={Boolean(selectedTreatment)}
         selectedTreatment={
-          selectedTreatment ? { name: selectedTreatment.title } : null
+          selectedTreatment
+            ? { name: selectedTreatment.title }
+            : null
         }
         onClose={() => setSelectedTreatment(null)}
       />
@@ -119,7 +155,9 @@ function TreatmentCard({
       </div>
 
       <div className="p-5">
-        <h3 className="text-lg font-semibold">{title}</h3>
+        <h3 className="text-lg font-semibold">
+          {title}
+        </h3>
 
         <p className="mt-2 text-xs leading-5 text-neutral-600 md:text-sm">
           {desc}

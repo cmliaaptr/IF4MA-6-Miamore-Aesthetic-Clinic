@@ -1,4 +1,8 @@
+"use client";
+
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 type TreatmentCardProps = {
   image: string;
@@ -17,6 +21,26 @@ export default function TreatmentCard({
   price,
   onBooking,
 }: TreatmentCardProps) {
+  const router = useRouter();
+
+  const handleBooking = () => {
+    const user = localStorage.getItem("user");
+
+    if (!user) {
+      toast.error("Silakan login terlebih dahulu");
+
+      localStorage.setItem(
+        "redirectAfterLogin",
+        window.location.pathname
+      );
+
+      router.push("/login");
+      return;
+    }
+
+    onBooking();
+  };
+
   return (
     <div className="overflow-hidden rounded-xl bg-white border border-gray-200 shadow-sm">
       <div className="relative w-full h-[150px] sm:h-[170px]">
@@ -46,6 +70,7 @@ export default function TreatmentCard({
             <p className="text-[10px] sm:text-xs text-gray-500">
               Mulai Dari
             </p>
+
             <p className="text-xs sm:text-sm font-bold text-black">
               {price}
             </p>
@@ -53,7 +78,7 @@ export default function TreatmentCard({
 
           <button
             type="button"
-            onClick={onBooking}
+            onClick={handleBooking}
             className="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 text-black"
             aria-label={`Booking ${title}`}
           >

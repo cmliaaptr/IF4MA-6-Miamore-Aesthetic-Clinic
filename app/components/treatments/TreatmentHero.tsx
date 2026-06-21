@@ -1,10 +1,35 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import BookingModal from "../booking/BookingModal";
 
 export default function TreatmentHero() {
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const router = useRouter();
+
+  const [isBookingOpen, setIsBookingOpen] =
+    useState(false);
+
+  const handleBooking = () => {
+    const user = localStorage.getItem("user");
+
+    if (!user) {
+      toast.error(
+        "Silakan login terlebih dahulu"
+      );
+
+      localStorage.setItem(
+        "redirectAfterLogin",
+        window.location.pathname
+      );
+
+      router.push("/login");
+      return;
+    }
+
+    setIsBookingOpen(true);
+  };
 
   return (
     <>
@@ -16,7 +41,8 @@ export default function TreatmentHero() {
           px-6 sm:px-10 md:px-16 lg:px-24
         "
         style={{
-          backgroundImage: "url('/images/treatment-hero.png')",
+          backgroundImage:
+            "url('/images/treatment-hero.png')",
         }}
       >
         <div className="max-w-xl text-left text-white">
@@ -25,13 +51,13 @@ export default function TreatmentHero() {
           </h1>
 
           <p className="text-sm sm:text-base md:text-lg leading-relaxed mb-6">
-            Temukan pilihan treatment terbaik untuk membantu kulit tampak lebih
-            sehat, cerah, dan terawat.
+            Temukan pilihan treatment terbaik untuk membantu
+            kulit tampak lebih sehat, cerah, dan terawat.
           </p>
 
           <button
             type="button"
-            onClick={() => setIsBookingOpen(true)}
+            onClick={handleBooking}
             className="
               inline-flex items-center justify-center
               px-6 py-3 rounded-full
@@ -47,7 +73,9 @@ export default function TreatmentHero() {
 
       <BookingModal
         isOpen={isBookingOpen}
-        onClose={() => setIsBookingOpen(false)}
+        onClose={() =>
+          setIsBookingOpen(false)
+        }
       />
     </>
   );
