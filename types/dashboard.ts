@@ -28,7 +28,7 @@ export type CustomerItem = {
   name: string;
   email: string;
   phone: string;
-  status: "Aktif" | "Nonaktif";
+  status: string;
 };
 
 export type DoctorScheduleItem = {

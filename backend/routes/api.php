@@ -10,6 +10,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/change-password', [AuthController::class, 'changePassword']);
 Route::get('/dokter', [AuthController::class, 'getDoctors']);
+Route::get('/pelanggan', [AuthController::class, 'getCustomers']);
 Route::get('/treatments', [TreatmentController::class, 'index']);
 Route::post('/treatments', [TreatmentController::class, 'store']);
 Route::get('/treatments/{id}', [TreatmentController::class, 'show']);

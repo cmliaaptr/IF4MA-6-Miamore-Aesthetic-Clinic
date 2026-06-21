@@ -182,6 +182,8 @@ export default function StaffProfilePage({
         body: JSON.stringify({
           username: draftProfile.name,
           email: draftProfile.email,
+          phone: draftProfile.phone,
+          address: draftProfile.address,
         }),
       });
 
@@ -205,6 +207,8 @@ export default function StaffProfilePage({
           ...currentUser,
           username: draftProfile.name,
           email: draftProfile.email,
+          phone: draftProfile.phone,
+          address: draftProfile.address,
         }),
       );
 

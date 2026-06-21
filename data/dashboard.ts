@@ -1,6 +1,6 @@
 // data/dashboard.ts
 
-import { BookingItem, DashboardStat, TreatmentItem, CustomerItem, DoctorScheduleItem, BookingPageItem, ReportItem} from "@/types/dashboard";
+import { BookingItem, DashboardStat, TreatmentItem, CustomerItem, BookingPageItem, ReportItem} from "@/types/dashboard";
 
 export const dashboardStats: DashboardStat[] = [
   {

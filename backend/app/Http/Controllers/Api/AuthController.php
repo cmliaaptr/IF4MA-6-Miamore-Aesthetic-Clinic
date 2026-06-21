@@ -86,6 +86,8 @@ class AuthController extends Controller
                 'username' => $user->username,
                 'email' => $user->email,
                 'role' => $user->role,
+                'phone' => $user->phone,
+                'address' => $user->address,
             ],
         ]);
     }
@@ -129,7 +131,14 @@ class AuthController extends Controller
         $user = User::findOrFail($id);
 
         return response()->json([
-            'data' => $user
+            'data' => [
+                'id_user' => $user->id_user,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->role,
+                'phone' => $user->phone,
+                'address' => $user->address,
+            ]
         ]);
     }
 
@@ -140,16 +149,27 @@ class AuthController extends Controller
         $request->validate([
             'username' => 'required|string|max:255',
             'email' => 'required|email',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
         ]);
 
         $user->update([
             'username' => $request->username,
             'email' => $request->email,
+            'phone' => $request->phone,
+            'address' => $request->address,
         ]);
 
         return response()->json([
             'message' => 'Profile berhasil diperbarui',
-            'data' => $user
+            'data' => [
+                'id_user' => $user->id_user,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->role,
+                'phone' => $user->phone,
+                'address' => $user->address,
+            ]
         ]);
     }
 
@@ -169,5 +189,14 @@ class AuthController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function getCustomers()
+    {
+        $customers = User::where('role', 'pelanggan')->get();
+
+        return response()->json([
+            'data' => $customers
+        ]);
     }
 }
