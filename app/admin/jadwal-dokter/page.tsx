@@ -7,6 +7,7 @@ import DoctorScheduleFormModal from "../../components/admin/DoctorScheduleFormMo
 import DeleteConfirmModal from "../../components/admin/DeleteConfirmModal";
 import SuccessModal from "../../components/admin/SuccessModal";
 import type { DoctorScheduleItem } from "@/types/dashboard";
+import { Noto_Sans_Mayan_Numerals } from "next/font/google";
 
 type DoctorScheduleFormData = {
   doctorId: number;
@@ -35,9 +36,7 @@ export default function JadwalDokterPage() {
 
   const fetchSchedules = async () => {
     try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/api/jadwal-dokter"
-      );
+      const response = await fetch("http://127.0.0.1:8000/api/jadwal-dokter");
 
       const text = await response.text();
       console.log("RAW:", text);
@@ -54,7 +53,7 @@ export default function JadwalDokterPage() {
           startTime: item.jam_mulai,
           endTime: item.jam_selesai,
           capacityPerHour: item.kapasitas,
-        }))
+        })),
       );
     } catch (error) {
       console.error(error);
@@ -69,45 +68,45 @@ export default function JadwalDokterPage() {
   // TAMBAH DATA
   // ==========================
 
-  const handleAddSchedule = async (
-    data: DoctorScheduleFormData
-  ) => {
+  const handleAddSchedule = async (data: DoctorScheduleFormData) => {
     try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/api/jadwal-dokter",
-        {
-          method: "POST",
+      console.log("DATA KIRIM:", data);
 
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+      const response = await fetch("http://127.0.0.1:8000/api/jadwal-dokter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          id_dokter: data.doctorId,
+          hari: data.day,
+          jam_mulai: data.startTime,
+          jam_selesai: data.endTime,
+          kapasitas: data.capacityPerHour,
+        }),
+      });
 
-          body: JSON.stringify({
-            id_dokter: data.doctorId,
-            hari: data.day,
-            jam_mulai: data.startTime,
-            jam_selesai: data.endTime,
-            kapasitas: data.capacityPerHour,
-          }),
-        }
-      );
+      const result = await response.json();
+
+      console.log("STATUS:", response.status);
+      console.log("RESULT:", result);
 
       if (!response.ok) {
-        throw new Error("Gagal menambah jadwal");
+        throw new Error(
+          result.error || result.message || "Gagal menambah jadwal",
+        );
       }
 
       await fetchSchedules();
 
       setIsAddOpen(false);
 
-      setSuccessMessage(
-        "Jadwal dokter berhasil ditambahkan."
-      );
+      setSuccessMessage("Jadwal dokter berhasil ditambahkan.");
 
       setIsSuccessOpen(true);
     } catch (error) {
-      console.error(error);
+      console.error("ERROR:", error);
     }
   };
 
@@ -115,16 +114,12 @@ export default function JadwalDokterPage() {
   // EDIT DATA
   // ==========================
 
-  const handleOpenEditModal = (
-    item: DoctorScheduleItem
-  ) => {
+  const handleOpenEditModal = (item: DoctorScheduleItem) => {
     setSelectedSchedule(item);
     setIsEditOpen(true);
   };
 
-  const handleEditSchedule = async (
-    data: DoctorScheduleFormData
-  ) => {
+  const handleEditSchedule = async (data: DoctorScheduleFormData) => {
     if (!selectedSchedule) return;
 
     try {
@@ -145,7 +140,7 @@ export default function JadwalDokterPage() {
             jam_selesai: data.endTime,
             kapasitas: data.capacityPerHour,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -157,9 +152,7 @@ export default function JadwalDokterPage() {
       setIsEditOpen(false);
       setSelectedSchedule(null);
 
-      setSuccessMessage(
-        "Jadwal dokter berhasil diubah."
-      );
+      setSuccessMessage("Jadwal dokter berhasil diubah.");
 
       setIsSuccessOpen(true);
     } catch (error) {
@@ -171,9 +164,7 @@ export default function JadwalDokterPage() {
   // HAPUS DATA
   // ==========================
 
-  const handleOpenDeleteModal = (
-    item: DoctorScheduleItem
-  ) => {
+  const handleOpenDeleteModal = (item: DoctorScheduleItem) => {
     setSelectedSchedule(item);
     setIsDeleteOpen(true);
   };
@@ -186,7 +177,7 @@ export default function JadwalDokterPage() {
         `http://127.0.0.1:8000/api/jadwal-dokter/${selectedSchedule.id}`,
         {
           method: "DELETE",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -198,9 +189,7 @@ export default function JadwalDokterPage() {
       setIsDeleteOpen(false);
       setSelectedSchedule(null);
 
-      setSuccessMessage(
-        "Jadwal dokter berhasil dihapus."
-      );
+      setSuccessMessage("Jadwal dokter berhasil dihapus.");
 
       setIsSuccessOpen(true);
     } catch (error) {
@@ -210,9 +199,7 @@ export default function JadwalDokterPage() {
 
   return (
     <section>
-      <h1 className="page-title">
-        Jadwal Dokter
-      </h1>
+      <h1 className="page-title">Jadwal Dokter</h1>
 
       <div className="page-action">
         <button

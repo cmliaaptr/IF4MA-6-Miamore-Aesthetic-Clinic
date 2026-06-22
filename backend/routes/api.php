@@ -27,3 +27,4 @@ Route::patch('/bookings/{id}/payment', [BookingController::class, 'confirmPaymen
 Route::get('/bookings/{id}', [BookingController::class, 'show']);
 Route::get('/profile/{id}', [AuthController::class, 'profile']);
 Route::put('/profile/{id}', [AuthController::class, 'updateProfile']);
+Route::get('jadwal-dokter/dokter/{id}', [JadwalDokterController::class, 'JadwalDokter']);

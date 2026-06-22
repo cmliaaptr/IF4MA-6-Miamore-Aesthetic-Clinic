@@ -103,4 +103,13 @@ class JadwalDokterController extends Controller
             'message' => 'Jadwal dokter berhasil dihapus'
         ]);
     }
+
+    public  function JadwalDokter($id)
+    {
+        $jadwal = JadwalDokter::where('id_dokter', $id)->get();
+
+        return response()->json([
+            'data' => $jadwal
+        ]);
+    }
 }

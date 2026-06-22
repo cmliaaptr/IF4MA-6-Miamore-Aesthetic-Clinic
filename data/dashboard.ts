@@ -110,15 +110,7 @@ export const customerList: CustomerItem[] = [
 ];
 
 // Data jadwal dokter
-export type DoctorScheduleItem = {
-  id: number;
-  doctorId: number;
-  doctorName: string;
-  day: string;
-  startTime: string;
-  endTime: string;
-  capacityPerHour: number;
-};
+
 
 // Data booking halaman booking
 export const bookingPageList: BookingPageItem[] = [
