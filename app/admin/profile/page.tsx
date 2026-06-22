@@ -8,6 +8,8 @@ type User = {
   username: string;
   email: string;
   role: string;
+  phone?: string;
+  address?: string;
 };
 
 export default function AdminProfilePage() {
@@ -16,13 +18,20 @@ export default function AdminProfilePage() {
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
 
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Gagal membaca data user", error);
-      }
-    }
+    if (!storedUser) return;
+
+    const currentUser = JSON.parse(storedUser);
+
+    fetch(
+      `http://127.0.0.1:8000/api/profile/${currentUser.id_user}`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setUser(data.data);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   }, []);
 
   if (!user) {
@@ -40,15 +49,17 @@ export default function AdminProfilePage() {
       breadcrumbRoot="Dashboard"
       name={user.username}
       role="Admin"
-      initials={user.username
-        ?.split(" ")
-        .map((word) => word[0])
-        .join("")
-        .toUpperCase()}
+      initials={
+        user.username
+          ?.split(" ")
+          .map((word) => word[0])
+          .join("")
+          .toUpperCase() || "A"
+      }
       summary="Administrator Miamore Aesthetic Clinic yang mengelola data pelanggan, treatment, booking, pembayaran, jadwal dokter, dan laporan klinik."
-      phone="-"
-      email={user.email}
-      address="-"
+      phone={user.phone || "-"}
+      email={user.email || "-"}
+      address={user.address || "-"}
     />
   );
 }

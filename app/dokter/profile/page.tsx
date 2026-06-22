@@ -19,6 +19,9 @@ export default function DoctorProfilePage() {
       .then((res) => res.json())
       .then((data) => {
         setUser(data.data);
+      })
+      .catch((err) => {
+        console.error(err);
       });
   }, []);
 
@@ -33,15 +36,17 @@ export default function DoctorProfilePage() {
       breadcrumbRoot="Dashboard"
       name={user.username}
       role="Dokter"
-      initials={user.username
-        ?.split(" ")
-        .map((word: string) => word[0])
-        .join("")
-        .toUpperCase()}
-      summary="Dokter Miamore Aesthetic Clinic"
-      phone="-"
-      email={user.email}
-      address="-"
+      initials={
+        user.username
+          ?.split(" ")
+          .map((word: string) => word[0])
+          .join("")
+          .toUpperCase() || "D"
+      }
+      summary="Dokter Miamore Aesthetic Clinic."
+      phone={user.phone || "-"}
+      email={user.email || "-"}
+      address={user.address || "-"}
     />
   );
 }
