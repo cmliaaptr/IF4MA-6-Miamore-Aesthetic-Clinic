@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Check, ChevronDown, Home, MessageCircle, ShieldCheck, User, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, Check, ChevronDown, Home, MessageCircle, ShieldCheck, User, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 
 export type BookingTreatment = {
@@ -53,15 +53,6 @@ type SelectOption = {
   value: string;
 };
 
-type JadwalDokterApiItem = {
-  id_jadwal: number;
-  nama_dokter: string;
-  hari: string;
-  jam_mulai: string;
-  jam_selesai: string;
-  kapasitas: number;
-};
-
 type DoctorApiItem = {
   id_user: number;
   username: string;
@@ -78,7 +69,7 @@ type LoggedInCustomer = {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
-const fallbackTimeOptions: SelectOption[] = [
+const clinicOperatingTimeOptions: SelectOption[] = [
   { label: "09:00", value: "09:00" },
   { label: "10:00", value: "10:00" },
   { label: "11:00", value: "11:00" },
@@ -175,18 +166,6 @@ function formatTimer(seconds: number) {
   return `${minutes}:${remainingSeconds}`;
 }
 
-function normalizeTime(time: string) {
-  return time.slice(0, 5);
-}
-
-function getIndonesianDayName(date: string) {
-  if (!date) return "";
-
-  return new Intl.DateTimeFormat("id-ID", {
-    weekday: "long",
-  }).format(new Date(`${date}T00:00:00`));
-}
-
 function toUniqueOptions(options: SelectOption[]) {
   const optionMap = new Map<string, SelectOption>();
 
@@ -262,7 +241,6 @@ export default function BookingModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState("TRD123456789");
   const [bookingId, setBookingId] = useState<number | null>(null);
-  const [doctorSchedules, setDoctorSchedules] = useState<JadwalDokterApiItem[]>([]);
   const [doctorOptions, setDoctorOptions] = useState<SelectOption[]>([]);
   const [paymentSeconds, setPaymentSeconds] = useState(15 * 60);
   const [paymentCompletedAt, setPaymentCompletedAt] = useState("");
@@ -281,96 +259,47 @@ export default function BookingModal({
     [selectedTreatment?.price, selectedTreatmentOption?.price]
   );
 
-  const filteredSchedules = useMemo(() => {
-    const selectedDay = getIndonesianDayName(formData.bookingDate).toLowerCase();
-
-    if (!selectedDay) return doctorSchedules;
-
-    return doctorSchedules.filter(
-      (schedule) => schedule.hari.toLowerCase() === selectedDay
-    );
-  }, [doctorSchedules, formData.bookingDate]);
-
-  const scheduleSource = filteredSchedules.length > 0 ? filteredSchedules : doctorSchedules;
-
-  const timeOptions = useMemo(() => {
-    const scheduleTimeOptions = scheduleSource.map((schedule) => {
-      const startTime = normalizeTime(schedule.jam_mulai);
-      const endTime = normalizeTime(schedule.jam_selesai);
-
-      return {
-        label: `${startTime} - ${endTime}`,
-        value: startTime,
-      };
-    });
-
-    return scheduleTimeOptions.length > 0
-      ? toUniqueOptions(scheduleTimeOptions)
-      : fallbackTimeOptions;
-  }, [scheduleSource]);
+  const timeOptions = clinicOperatingTimeOptions;
 
   const therapistOptions = useMemo(() => {
-    const scheduleTherapistOptions = scheduleSource.map((schedule) => ({
-      label: schedule.nama_dokter,
-      value: schedule.nama_dokter,
-    }));
-
-    if (scheduleTherapistOptions.length > 0) {
-      return toUniqueOptions(scheduleTherapistOptions);
-    }
-
     return doctorOptions.length > 0 ? doctorOptions : fallbackTherapistOptions;
-  }, [doctorOptions, scheduleSource]);
+  }, [doctorOptions]);
 
   const displayTreatment = formData.treatment || selectedTreatment?.name || "Facial Treatment";
   const displayTherapist = formData.therapist || "-";
 
   useEffect(() => {
-    async function fetchDoctorSchedules() {
+    async function fetchDoctors() {
       try {
-        const [scheduleResponse, doctorResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/jadwal-dokter`, {
-            headers: {
-              Accept: "application/json",
-            },
-          }),
-          fetch(`${API_BASE_URL}/api/dokter`, {
-            headers: {
-              Accept: "application/json",
-            },
-          }),
-        ]);
+        const doctorResponse = await fetch(`${API_BASE_URL}/api/dokter`, {
+          headers: {
+            Accept: "application/json",
+          },
+        });
 
-        if (scheduleResponse.ok) {
-          const text = await scheduleResponse.text();
-          const result = parseApiText(text);
+        if (!doctorResponse.ok) return;
 
-          setDoctorSchedules(Array.isArray(result?.data) ? result.data : []);
-        }
+        const text = await doctorResponse.text();
+        const result = parseApiText(text);
+        const doctors = Array.isArray(result?.data) ? (result.data as DoctorApiItem[]) : [];
 
-        if (doctorResponse.ok) {
-          const text = await doctorResponse.text();
-          const result = parseApiText(text);
-          const doctors = Array.isArray(result?.data) ? (result.data as DoctorApiItem[]) : [];
-
-          setDoctorOptions(
-            toUniqueOptions(
-              doctors
-                .filter((doctor) => doctor.role === "dokter" && doctor.username)
-                .map((doctor) => ({
-                  label: doctor.username,
-                  value: doctor.username,
-                }))
-            )
-          );
-        }
-      } catch (scheduleError) {
-        console.error("Gagal mengambil jadwal dokter", scheduleError);
+        setDoctorOptions(
+          toUniqueOptions(
+            doctors
+              .filter((doctor) => doctor.role === "dokter" && doctor.username)
+              .map((doctor) => ({
+                label: doctor.username,
+                value: doctor.username,
+              }))
+          )
+        );
+      } catch (doctorError) {
+        console.error("Gagal mengambil data dokter", doctorError);
       }
     }
 
     if (isOpen) {
-      fetchDoctorSchedules();
+      fetchDoctors();
     }
   }, [isOpen]);
 
@@ -498,6 +427,12 @@ export default function BookingModal({
     }
   };
 
+  const handleBackToForm = () => {
+    setError("");
+    setIsSubmitting(false);
+    setStep("form");
+  };
+
   return (
     <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/60 px-3 py-4">
       <div className="mx-auto min-h-full w-full max-w-2xl">
@@ -591,6 +526,7 @@ export default function BookingModal({
               paymentSeconds={paymentSeconds}
               error={error}
               isSubmitting={isSubmitting}
+              onBackToForm={handleBackToForm}
               onConfirmPayment={handleConfirmPayment}
             />
           )}
@@ -788,6 +724,7 @@ function PaymentStep({
   paymentSeconds,
   error,
   isSubmitting,
+  onBackToForm,
   onConfirmPayment,
 }: {
   formData: BookingFormData;
@@ -798,14 +735,24 @@ function PaymentStep({
   paymentSeconds: number;
   error: string;
   isSubmitting: boolean;
+  onBackToForm: () => void;
   onConfirmPayment: () => void;
 }) {
   return (
     <div className="space-y-6">
-      <header>
+      <header className="flex flex-wrap items-center justify-between gap-3 pr-12">
         <h2 className="text-3xl font-bold text-[#bf9130] md:text-5xl">
           Pembayaran
         </h2>
+        <button
+          type="button"
+          onClick={onBackToForm}
+          disabled={isSubmitting}
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-[#bf9130] px-4 py-2 text-sm font-bold text-[#bf9130] hover:bg-[#fff7e6] disabled:cursor-not-allowed disabled:border-neutral-300 disabled:text-neutral-400"
+        >
+          <ArrowLeft size={18} />
+          Kembali
+        </button>
       </header>
 
       <BookingInfo

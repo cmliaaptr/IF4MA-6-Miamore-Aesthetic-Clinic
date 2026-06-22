@@ -10,7 +10,7 @@ export default function Hero({ showButton = true }: HeroProps) {
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#18120e] px-5 pt-24 text-white md:px-10 lg:px-20">
       <Image
-        src="/images/hero-product.png"
+        src="/images/hero-landing.jpg"
         alt="Background Miamore"
         fill
         priority

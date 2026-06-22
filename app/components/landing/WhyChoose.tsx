@@ -14,7 +14,7 @@ export default function WhyChoose() {
       <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 md:grid-cols-2">
         <div className="relative h-72 overflow-hidden rounded-3xl sm:h-96 md:h-[420px]">
           <Image
-            src="/images/product-set.jpg"
+            src="/images/why-product.jpg"
             alt="Produk Miamore"
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
