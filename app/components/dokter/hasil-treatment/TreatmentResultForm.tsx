@@ -9,8 +9,9 @@ type TreatmentResultFormProps = {
   formData: TreatmentResultFormData;
   onChange: (field: keyof TreatmentResultFormData, value: string) => void;
   onReset: () => void;
-  onSubmit: () => void;
+  onSubmit: () => void | Promise<void>;
   onClose?: () => void;
+  isSubmitting?: boolean;
 };
 
 const fields: {
@@ -58,6 +59,7 @@ export default function TreatmentResultForm({
   onReset,
   onSubmit,
   onClose,
+  isSubmitting = false,
 }: TreatmentResultFormProps) {
   return (
     <div className="rounded-lg border border-neutral-200 bg-white p-5">
@@ -116,6 +118,7 @@ export default function TreatmentResultForm({
           <button
             type="button"
             onClick={onReset}
+            disabled={isSubmitting}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-neutral-300 px-4 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
           >
             <RotateCcw size={16} />
@@ -123,10 +126,11 @@ export default function TreatmentResultForm({
           </button>
           <button
             type="submit"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#d6b53f] px-5 text-sm font-semibold text-white transition hover:bg-[#c29f2f]"
+            disabled={isSubmitting}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#d6b53f] px-5 text-sm font-semibold text-white transition hover:bg-[#c29f2f] disabled:cursor-not-allowed disabled:bg-neutral-400"
           >
             <Send size={16} />
-            Kirim Hasil
+            {isSubmitting ? "Mengirim..." : "Kirim Hasil"}
           </button>
         </div>
       </form>

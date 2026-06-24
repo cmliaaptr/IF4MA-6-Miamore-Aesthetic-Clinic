@@ -1,12 +1,30 @@
 "use client";
 
-import { ArrowLeft, CalendarDays, Check, ChevronDown, Home, MessageCircle, ShieldCheck, User, X } from "lucide-react";
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { X } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import Booking, {
+  BookingFieldChangeEvent,
+  BookingStep,
+  BookingTreatment,
+  clinicOperatingTimeOptions,
+  createBookingPayload,
+  createTreatmentOptions,
+  DoctorApiItem,
+  fallbackTherapistOptions,
+  getLoggedInCustomer,
+  initialBookingForm,
+  parseApiText,
+  priceToNumber,
+  SelectOption,
+  toUniqueOptions,
+} from "./Booking";
+import Payment from "./Payment";
+import PembayaranSelesai from "./PembayaranSelesai";
 
-export type BookingTreatment = {
-  name: string;
-  price?: string;
-};
+export type { BookingTreatment } from "./Booking";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
 type BookingModalProps = {
   isOpen: boolean;
@@ -15,220 +33,6 @@ type BookingModalProps = {
   onClose: () => void;
 };
 
-type BookingFormData = {
-  fullName: string;
-  birthDate: string;
-  gender: string;
-  phone: string;
-  email: string;
-  address: string;
-  bookingDate: string;
-  bookingTime: string;
-  treatment: string;
-  therapist: string;
-  notes: string;
-};
-
-type BookingPayload = {
-  id_user: number;
-  nama_lengkap: string;
-  tanggal_lahir: string;
-  jenis_kelamin: string;
-  no_telephone: string;
-  email?: string;
-  alamat: string;
-  tanggal_booking: string;
-  waktu_booking: string;
-  treatment: string;
-  dokter_terapis?: string;
-  catatan?: string;
-  total_pembayaran?: number;
-  metode_pembayaran?: string;
-};
-
-type BookingStep = "form" | "payment" | "success";
-
-type SelectOption = {
-  label: string;
-  value: string;
-};
-
-type DoctorApiItem = {
-  id_user: number;
-  username: string;
-  role: string;
-};
-
-type LoggedInCustomer = {
-  id_user: number;
-  username: string;
-  email?: string;
-  role: string;
-};
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
-
-const clinicOperatingTimeOptions: SelectOption[] = [
-  { label: "09:00", value: "09:00" },
-  { label: "10:00", value: "10:00" },
-  { label: "11:00", value: "11:00" },
-  { label: "13:00", value: "13:00" },
-  { label: "14:00", value: "14:00" },
-  { label: "15:00", value: "15:00" },
-  { label: "16:00", value: "16:00" },
-];
-const fallbackTherapistOptions: SelectOption[] = [
-  { label: "Dr. Marissa", value: "Dr. Marissa" },
-  { label: "Dr. Nadine", value: "Dr. Nadine" },
-  { label: "Terapis Miamore", value: "Terapis Miamore" },
-];
-const defaultTreatmentOptions: BookingTreatment[] = [
-  { name: "Basmi Flek Coba-Coba", price: "Rp. 500.000" },
-  { name: "Acne Treatment", price: "Rp. 450.000" },
-  { name: "Glowing Treatment", price: "Rp. 600.000" },
-];
-
-const initialForm: BookingFormData = {
-  fullName: "",
-  birthDate: "",
-  gender: "",
-  phone: "",
-  email: "",
-  address: "",
-  bookingDate: "",
-  bookingTime: "",
-  treatment: "",
-  therapist: "",
-  notes: "",
-};
-
-function priceToNumber(price?: string) {
-  if (!price) return 350000;
-  const parsed = Number(price.replace(/[^\d]/g, ""));
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 350000;
-}
-
-function createTreatmentOptions(
-  selectedTreatment?: BookingTreatment | null,
-  availableTreatments: BookingTreatment[] = []
-) {
-  const treatmentMap = new Map<string, BookingTreatment>();
-
-  [selectedTreatment, ...availableTreatments, ...defaultTreatmentOptions].forEach((treatment) => {
-    if (!treatment?.name) return;
-    const existingTreatment = treatmentMap.get(treatment.name);
-    treatmentMap.set(treatment.name, {
-      name: treatment.name,
-      price: treatment.price || existingTreatment?.price,
-    });
-  });
-
-  return Array.from(treatmentMap.values());
-}
-
-function formatRupiah(amount: number) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function formatDate(date: string) {
-  if (!date) return "-";
-  return new Intl.DateTimeFormat("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(`${date}T00:00:00`));
-}
-
-function formatDateTime(date: string) {
-  if (!date) return "-";
-
-  const formattedDate = new Intl.DateTimeFormat("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date(date));
-
-  return `${formattedDate.replace(".", ":")} WIB`;
-}
-
-function formatTimer(seconds: number) {
-  const minutes = Math.floor(seconds / 60).toString().padStart(2, "0");
-  const remainingSeconds = (seconds % 60).toString().padStart(2, "0");
-
-  return `${minutes}:${remainingSeconds}`;
-}
-
-function toUniqueOptions(options: SelectOption[]) {
-  const optionMap = new Map<string, SelectOption>();
-
-  options.forEach((option) => {
-    if (!option.value) return;
-    optionMap.set(option.value, option);
-  });
-
-  return Array.from(optionMap.values());
-}
-
-function parseApiText(text: string) {
-  return JSON.parse(text.replace(/^\/\//, "").trim());
-}
-
-function getLoggedInCustomer(): LoggedInCustomer | null {
-  try {
-    const rawUser = localStorage.getItem("user");
-    if (!rawUser) return null;
-
-    const user = JSON.parse(rawUser) as Partial<LoggedInCustomer>;
-    if (
-      typeof user.id_user !== "number" ||
-      user.role !== "pelanggan" ||
-      typeof user.username !== "string"
-    ) {
-      return null;
-    }
-
-    return {
-      id_user: user.id_user,
-      username: user.username,
-      email: typeof user.email === "string" ? user.email : undefined,
-      role: user.role,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function createPayload(
-  form: BookingFormData,
-  totalPayment: number,
-  customer: LoggedInCustomer
-): BookingPayload {
-  return {
-    id_user: customer.id_user,
-    nama_lengkap: form.fullName,
-    tanggal_lahir: form.birthDate,
-    jenis_kelamin: form.gender,
-    no_telephone: form.phone,
-    email: form.email || customer.email || undefined,
-    alamat: form.address,
-    tanggal_booking: form.bookingDate,
-    waktu_booking: form.bookingTime,
-    treatment: form.treatment,
-    dokter_terapis: form.therapist || undefined,
-    catatan: form.notes || undefined,
-    total_pembayaran: totalPayment,
-    metode_pembayaran: "QRIS",
-  };
-}
-
 export default function BookingModal({
   isOpen,
   selectedTreatment,
@@ -236,7 +40,7 @@ export default function BookingModal({
   onClose,
 }: BookingModalProps) {
   const [step, setStep] = useState<BookingStep>("form");
-  const [formData, setFormData] = useState<BookingFormData>(initialForm);
+  const [formData, setFormData] = useState(initialBookingForm);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState("TRD123456789");
@@ -258,8 +62,6 @@ export default function BookingModal({
     () => priceToNumber(selectedTreatmentOption?.price || selectedTreatment?.price),
     [selectedTreatment?.price, selectedTreatmentOption?.price]
   );
-
-  const timeOptions = clinicOperatingTimeOptions;
 
   const therapistOptions = useMemo(() => {
     return doctorOptions.length > 0 ? doctorOptions : fallbackTherapistOptions;
@@ -322,13 +124,11 @@ export default function BookingModal({
     setBookingId(null);
     setPaymentSeconds(15 * 60);
     setPaymentCompletedAt("");
-    setFormData(initialForm);
+    setFormData(initialBookingForm);
     onClose();
   };
 
-  const handleChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (event: BookingFieldChangeEvent) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -361,7 +161,7 @@ export default function BookingModal({
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify(createPayload(nextForm, totalPayment, customer)),
+        body: JSON.stringify(createBookingPayload(nextForm, totalPayment, customer)),
       });
 
       const result = await response.json().catch(() => null);
@@ -447,77 +247,21 @@ export default function BookingModal({
           </button>
 
           {step === "form" && (
-            <form onSubmit={handleSubmitBooking} className="space-y-4">
-              <header>
-                <h2 className="text-2xl font-bold text-[#bf9130] md:text-3xl">
-                  Booking Treatment
-                </h2>
-                <p className="mt-1 text-sm font-medium md:text-base">
-                  Lengkapi informasi dibawah untuk memesan jadwal anda
-                </p>
-              </header>
-
-              <FormSection icon={<User size={18} />} title="DATA DIRI">
-                <div className="grid gap-3 md:grid-cols-2">
-                  <TextField label="Nama Lengkap" name="fullName" value={formData.fullName} onChange={handleChange} />
-                  <TextField label="Tanggal Lahir" name="birthDate" type="date" value={formData.birthDate} onChange={handleChange} />
-                  <div>
-                    <label className="booking-label">Jenis Kelamin</label>
-                    <div className="mt-2 flex flex-wrap gap-3 text-xs text-neutral-600">
-                      {["Perempuan", "Laki - Laki"].map((gender) => (
-                        <label key={gender} className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name="gender"
-                            value={gender}
-                            checked={formData.gender === gender}
-                            onChange={handleChange}
-                            className="h-4 w-4 accent-[#bf9130]"
-                          />
-                          {gender}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <TextField label="No. Telephone" name="phone" value={formData.phone} placeholder="08xxxxxxxxxx" onChange={handleChange} />
-                  <TextField label="Email (opsional)" name="email" type="email" value={formData.email} onChange={handleChange} />
-                  <TextAreaField label="Alamat" name="address" value={formData.address} onChange={handleChange} />
-                </div>
-              </FormSection>
-
-              <FormSection icon={<CalendarDays size={18} />} title="DETAIL BOOKING">
-                <div className="grid gap-3 md:grid-cols-2">
-                  <TextField label="Tanggal Booking" name="bookingDate" type="date" value={formData.bookingDate} onChange={handleChange} />
-                  <SelectField label="Waktu Booking" name="bookingTime" value={formData.bookingTime} onChange={handleChange} options={timeOptions} placeholder="Pilih waktu" />
-                </div>
-                <SelectField label="Layanan / Treatment yang dipilih" name="treatment" value={formData.treatment || selectedTreatment?.name || ""} onChange={handleChange} options={treatmentOptions} placeholder="Pilih Treatment" />
-                <SelectField label="Dokter / Terapis (Opsional)" name="therapist" value={formData.therapist} onChange={handleChange} options={therapistOptions} placeholder="Pilih Dokter / Terapis" />
-              </FormSection>
-
-              <FormSection icon={<MessageCircle size={18} />} title="CATATAN TAMBAHAN">
-                <textarea
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  placeholder="Tuliskan keluhan kulit atau catatan khusus (opsional)"
-                  className="min-h-20 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-[#bf9130]"
-                />
-              </FormSection>
-
-              {error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">{error}</p>}
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full rounded-full bg-[#17a900] px-5 py-3 text-lg font-bold text-white hover:bg-[#148f00] disabled:cursor-not-allowed disabled:bg-neutral-400 md:text-xl"
-              >
-                {isSubmitting ? "Memproses..." : "Lanjutkan ke Pembayaran"}
-              </button>
-            </form>
+            <Booking
+              formData={formData}
+              selectedTreatment={selectedTreatment}
+              treatmentOptions={treatmentOptions}
+              timeOptions={clinicOperatingTimeOptions}
+              therapistOptions={therapistOptions}
+              error={error}
+              isSubmitting={isSubmitting}
+              onChange={handleChange}
+              onSubmit={handleSubmitBooking}
+            />
           )}
 
           {step === "payment" && (
-            <PaymentStep
+            <Payment
               orderId={orderId}
               totalPayment={totalPayment}
               treatment={displayTreatment}
@@ -532,7 +276,7 @@ export default function BookingModal({
           )}
 
           {step === "success" && (
-            <SuccessStep
+            <PembayaranSelesai
               orderId={orderId}
               totalPayment={totalPayment}
               treatment={displayTreatment}
@@ -543,401 +287,6 @@ export default function BookingModal({
             />
           )}
         </div>
-      </div>
-    </div>
-  );
-}
-
-function FormSection({
-  icon,
-  title,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="border-t border-neutral-300 pt-8 first:border-t-0 first:pt-0">
-      <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#d0ad5d] px-4 py-2 text-sm font-bold text-white md:text-base">
-        <span className="text-neutral-900">{icon}</span>
-        {title}
-      </div>
-      <div className="space-y-3">{children}</div>
-    </section>
-  );
-}
-
-function TextField({
-  label,
-  name,
-  value,
-  onChange,
-  type = "text",
-  placeholder,
-}: {
-  label: string;
-  name: string;
-  value: string;
-  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  type?: string;
-  placeholder?: string;
-}) {
-  return (
-    <div>
-      <label className="booking-label" htmlFor={name}>
-        {label}
-      </label>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        onChange={onChange}
-        className="booking-input"
-      />
-    </div>
-  );
-}
-
-function TextAreaField({
-  label,
-  name,
-  value,
-  onChange,
-}: {
-  label: string;
-  name: string;
-  value: string;
-  onChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
-}) {
-  return (
-    <div>
-      <label className="booking-label" htmlFor={name}>
-        {label}
-      </label>
-      <textarea
-        id={name}
-        name={name}
-        value={value}
-        onChange={onChange}
-        className="booking-input min-h-24 resize-none py-4"
-      />
-    </div>
-  );
-}
-
-function SelectField({
-  label,
-  name,
-  value,
-  onChange,
-  options,
-  placeholder,
-}: {
-  label: string;
-  name: string;
-  value: string;
-  onChange: (event: ChangeEvent<HTMLSelectElement>) => void;
-  options: Array<BookingTreatment | SelectOption>;
-  placeholder: string;
-}) {
-  return (
-    <div>
-      <label className="booking-label" htmlFor={name}>
-        {label}
-      </label>
-      <div className="relative">
-        <select
-          id={name}
-          name={name}
-          value={value}
-          onChange={onChange}
-          className="booking-input appearance-none pr-12"
-        >
-          <option value="">{placeholder}</option>
-          {options.map((option) => (
-            <option key={"value" in option ? option.value : option.name} value={"value" in option ? option.value : option.name}>
-              {"value" in option
-                ? option.label
-                : option.price
-                  ? `${option.name} - ${option.price}`
-                  : option.name}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-neutral-800" size={28} />
-      </div>
-    </div>
-  );
-}
-
-function BookingInfo({
-  formData,
-  treatment,
-  therapist,
-  totalPayment,
-  compact = false,
-}: {
-  formData: BookingFormData;
-  treatment: string;
-  therapist: string;
-  totalPayment: number;
-  compact?: boolean;
-}) {
-  return (
-    <div className="rounded-2xl bg-[#fbf7f7] p-4 shadow-[0_0_14px_rgba(0,0,0,0.16)] md:p-5">
-      <div className="mb-3 flex items-center gap-2">
-        <CalendarDays size={24} className="text-neutral-500" />
-        {compact && <h3 className="text-lg font-bold">Detail Booking</h3>}
-      </div>
-      <div className="space-y-1.5 text-xs md:text-sm">
-        <InfoRow label="Nama" value={formData.fullName || "-"} />
-        <InfoRow label="Treatment" value={treatment} />
-        <InfoRow label="Dokter / Terapis" value={therapist} />
-        <InfoRow label="Tanggal" value={formatDate(formData.bookingDate)} />
-        <InfoRow label="Jam" value={formData.bookingTime || "-"} />
-      </div>
-      <div className="my-4 border-t border-neutral-300" />
-      <InfoRow label="Total Pembayaran" value={formatRupiah(totalPayment)} strong />
-    </div>
-  );
-}
-
-function InfoRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
-  return (
-    <div className="grid grid-cols-[110px_8px_1fr] gap-2">
-      <span>{label}</span>
-      <span>:</span>
-      <span className={strong ? "font-bold" : ""}>{value}</span>
-    </div>
-  );
-}
-
-function PaymentStep({
-  formData,
-  treatment,
-  therapist,
-  totalPayment,
-  orderId,
-  paymentSeconds,
-  error,
-  isSubmitting,
-  onBackToForm,
-  onConfirmPayment,
-}: {
-  formData: BookingFormData;
-  treatment: string;
-  therapist: string;
-  totalPayment: number;
-  orderId: string;
-  paymentSeconds: number;
-  error: string;
-  isSubmitting: boolean;
-  onBackToForm: () => void;
-  onConfirmPayment: () => void;
-}) {
-  return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3 pr-12">
-        <h2 className="text-3xl font-bold text-[#bf9130] md:text-5xl">
-          Pembayaran
-        </h2>
-        <button
-          type="button"
-          onClick={onBackToForm}
-          disabled={isSubmitting}
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-[#bf9130] px-4 py-2 text-sm font-bold text-[#bf9130] hover:bg-[#fff7e6] disabled:cursor-not-allowed disabled:border-neutral-300 disabled:text-neutral-400"
-        >
-          <ArrowLeft size={18} />
-          Kembali
-        </button>
-      </header>
-
-      <BookingInfo
-        formData={formData}
-        treatment={treatment}
-        therapist={therapist}
-        totalPayment={totalPayment}
-      />
-
-      <section className="rounded-2xl bg-[#fbf7f7] p-4 shadow-[0_0_14px_rgba(0,0,0,0.16)] md:p-5">
-        <p className="text-sm text-neutral-800">
-          Scan QRIS dibawah ini menggunakan pembayaran favorit anda
-        </p>
-
-        <div className="mt-4 flex justify-center">
-          <div className="rounded-md border border-neutral-900 bg-white px-8 py-3 text-center">
-            <p className="text-xs font-bold leading-tight">QRIS</p>
-            <p className="text-[10px] leading-tight">QR Code Standar Pembayaran Nasional</p>
-            <QrisCode />
-            <p className="mt-2 text-sm">Order ID : {orderId}</p>
-          </div>
-        </div>
-
-        <div className="mx-auto mt-4 max-w-lg rounded-lg border border-neutral-900 px-3 py-2 text-center">
-          <p className="text-sm">Mendukung aplikasi pembayaran :</p>
-          <PaymentMethodBadges />
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 rounded-lg border border-neutral-900 p-3">
-          <div>
-            <p className="text-sm font-semibold">Total Bayar</p>
-            <p className="text-2xl font-bold">{formatRupiah(totalPayment)}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-semibold">Sisa Waktu Pembayaran</p>
-            <p className="text-2xl font-bold">{formatTimer(paymentSeconds)}</p>
-          </div>
-        </div>
-
-        <div className="mt-5 flex gap-3 text-sm text-neutral-900">
-          <ShieldCheck className="mt-0.5 shrink-0 text-neutral-600" size={30} />
-          <p>
-            Setelah pembayaran berhasil, status booking akan otomatis diperbarui.
-            Jangan tutup pembayaran ini sebelum pembayaran terverifikasi.
-          </p>
-        </div>
-
-        {error && <p className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">{error}</p>}
-
-        <button
-          type="button"
-          onClick={onConfirmPayment}
-          disabled={isSubmitting}
-          className="mt-5 w-full rounded-full bg-[#17a900] px-5 py-3 text-lg font-bold text-white hover:bg-[#148f00] disabled:cursor-not-allowed disabled:bg-neutral-400"
-        >
-          {isSubmitting ? "Memverifikasi..." : "Saya Sudah Bayar"}
-        </button>
-      </section>
-    </div>
-  );
-}
-
-function QrisCode() {
-  const activeCells = new Set([
-    0, 1, 2, 3, 4, 5, 6, 9, 10, 12, 13, 19, 22, 24, 26, 28, 30, 32, 34, 36,
-    39, 40, 41, 42, 43, 44, 45, 48, 50, 52, 54, 56, 58, 60, 65, 66, 68, 70,
-    73, 75, 77, 78, 80, 82, 84, 86, 88, 91, 92, 95, 96, 98, 100, 102, 104,
-    106, 108, 110, 112, 114, 116, 117, 118, 119, 120, 123, 125, 127, 129,
-    131, 133, 136, 138, 140, 142, 144, 146, 148, 150, 152, 156, 157, 158,
-    159, 160, 161, 162, 164, 166, 168,
-  ]);
-
-  return (
-    <div className="mx-auto mt-3 grid h-40 w-40 grid-cols-[repeat(13,1fr)] grid-rows-[repeat(13,1fr)] gap-0.5 bg-white p-2">
-      {Array.from({ length: 169 }).map((_, index) => (
-        <span
-          key={index}
-          className={activeCells.has(index) ? "bg-black" : "bg-white"}
-        />
-      ))}
-    </div>
-  );
-}
-
-function PaymentMethodBadges() {
-  const methods = ["BCA", "BRI", "DANA", "OVO", "GoPay", "Shopee", "LinkAja"];
-
-  return (
-    <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-      {methods.map((method) => (
-        <span
-          key={method}
-          className="rounded-md bg-white px-2 py-1 text-xs font-bold text-[#1f65c9] shadow-sm ring-1 ring-neutral-200"
-        >
-          {method}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function SuccessStep({
-  formData,
-  treatment,
-  therapist,
-  totalPayment,
-  orderId,
-  paymentCompletedAt,
-  onClose,
-}: {
-  formData: BookingFormData;
-  treatment: string;
-  therapist: string;
-  totalPayment: number;
-  orderId: string;
-  paymentCompletedAt: string;
-  onClose: () => void;
-}) {
-  return (
-    <div className="space-y-4 text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#43b400] text-white">
-        <Check size={38} strokeWidth={4} />
-      </div>
-      <div>
-        <h2 className="text-xl font-semibold text-[#37b400]">Pembayaran Berhasil!</h2>
-        <p className="text-lg font-medium">Booking Anda telah dikonfirmasi.</p>
-      </div>
-
-      <div className="text-left">
-        <div className="rounded-2xl bg-[#fbf7f7] p-4 shadow-[0_0_14px_rgba(0,0,0,0.16)] md:p-5">
-          <div className="mb-3 flex items-center gap-2">
-            <CalendarDays size={34} className="text-neutral-500" />
-            <h3 className="text-2xl font-bold">Detail Booking</h3>
-          </div>
-          <div className="space-y-2 text-sm">
-            <InfoRow label="Nama" value={formData.fullName || "-"} />
-            <InfoRow label="Treatment" value={treatment} />
-            <InfoRow label="Dokter / Terapis" value={therapist} />
-            <InfoRow label="Tanggal" value={formatDate(formData.bookingDate)} />
-            <InfoRow label="Jam" value={formData.bookingTime || "-"} />
-          </div>
-          <div className="my-5 border-t border-neutral-300" />
-          <div className="space-y-2 text-sm">
-            <InfoRow label="Total Pembayaran" value={formatRupiah(totalPayment)} strong />
-            <div className="grid grid-cols-[110px_8px_1fr] gap-2">
-              <span>Status Booking</span>
-              <span>:</span>
-              <span>
-                <span className="rounded border border-[#43b400] px-2 py-0.5 text-xs text-neutral-800">
-                  Terkonfirmasi
-                </span>
-              </span>
-            </div>
-            <InfoRow label="Metode Pembayaran" value="QRIS" strong />
-            <InfoRow label="Order ID" value={orderId} />
-            <InfoRow label="Waktu Pembayaran" value={formatDateTime(paymentCompletedAt)} />
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-2xl bg-[#fbf7f7] p-4 text-left shadow-[0_0_14px_rgba(0,0,0,0.16)]">
-          <div className="flex items-center gap-3 text-lg font-medium">
-            <CalendarDays className="text-neutral-500" size={34} />
-            Ingat Jadwal Anda
-          </div>
-          <p className="mt-5 text-sm">Mohon hadir 10 menit sebelum jadwal treatment</p>
-          <p className="mt-5 text-sm">Terima kasih telah mempercayakan perawatan anda di Miamore Aesthetic Clinic</p>
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <button
-          type="button"
-          className="inline-flex items-center justify-center gap-2 rounded-md border border-[#bf9130] px-4 py-2.5 text-base font-medium"
-        >
-          <CalendarDays size={34} className="text-neutral-500" />
-          Lihat Booking Saya
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-[#bf9130] px-4 py-2.5 text-base font-medium text-white"
-        >
-          <Home size={34} className="text-neutral-950" />
-          Kembali ke Beranda
-        </button>
       </div>
     </div>
   );

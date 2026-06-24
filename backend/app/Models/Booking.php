@@ -34,4 +34,9 @@ class Booking extends Model
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');
     }
+
+    public function treatmentResult()
+    {
+        return $this->hasOne(TreatmentResult::class, 'id_booking', 'id_booking');
+    }
 }

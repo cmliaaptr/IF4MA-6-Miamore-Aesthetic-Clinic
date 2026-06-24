@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TreatmentController;
 use App\Http\Controllers\Api\JadwalDokterController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\TreatmentResultController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -28,3 +29,6 @@ Route::get('/bookings/{id}', [BookingController::class, 'show']);
 Route::get('/profile/{id}', [AuthController::class, 'profile']);
 Route::put('/profile/{id}', [AuthController::class, 'updateProfile']);
 Route::get('jadwal-dokter/dokter/{id}', [JadwalDokterController::class, 'JadwalDokter']);
+Route::get('/treatment-results/doctor', [TreatmentResultController::class, 'doctorIndex']);
+Route::post('/treatment-results', [TreatmentResultController::class, 'store']);
+Route::get('/riwayat/customer/{idUser}', [TreatmentResultController::class, 'customerHistory']);

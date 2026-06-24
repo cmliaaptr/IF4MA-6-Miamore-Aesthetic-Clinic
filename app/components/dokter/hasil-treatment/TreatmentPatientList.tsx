@@ -7,7 +7,7 @@ import type {
 type TreatmentPatientListProps = {
   patients: TreatmentPatient[];
   results: Record<number, TreatmentResult>;
-  selectedPatientId: number;
+  selectedPatientId: number | null;
   onSelect: (patient: TreatmentPatient) => void;
   onFill: (patient: TreatmentPatient) => void;
 };
@@ -33,6 +33,17 @@ export default function TreatmentPatientList({
           </tr>
         </thead>
         <tbody>
+          {patients.length === 0 ? (
+            <tr>
+              <td
+                colSpan={6}
+                className="px-4 py-8 text-center text-sm font-medium text-neutral-500"
+              >
+                Belum ada booking lunas untuk ditampilkan.
+              </td>
+            </tr>
+          ) : null}
+
           {patients.map((patient, index) => {
             const hasResult = Boolean(results[patient.id]);
             const isSelected = patient.id === selectedPatientId;
