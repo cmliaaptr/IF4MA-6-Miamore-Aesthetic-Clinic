@@ -104,9 +104,11 @@ export default function Navbar() {
             <Link href="/profile">Profile</Link>
           </li>
 
-          <li>
-            <Link href="/riwayat">Riwayat</Link>
-          </li>
+          {isCustomerLoggedIn ? (
+            <li>
+              <Link href="/riwayat">Riwayat</Link>
+            </li>
+          ) : null}
         </ul>
 
         <button
@@ -223,13 +225,15 @@ export default function Navbar() {
               </>
             )}
 
-            <Link
-              href="/riwayat"
-              onClick={() => setOpenMobile(false)}
-              className="block rounded-xl px-3 py-2"
-            >
-              Riwayat
-            </Link>
+            {isCustomerLoggedIn ? (
+              <Link
+                href="/riwayat"
+                onClick={() => setOpenMobile(false)}
+                className="block rounded-xl px-3 py-2"
+              >
+                Riwayat
+              </Link>
+            ) : null}
 
             {isCustomerLoggedIn ? (
               <button
