@@ -25,6 +25,8 @@ Route::delete('/jadwal-dokter/{id}', [JadwalDokterController::class, 'destroy'])
 Route::get('/bookings', [BookingController::class, 'index']);
 Route::post('/bookings', [BookingController::class, 'store']);
 Route::patch('/bookings/{id}/payment', [BookingController::class, 'confirmPayment']);
+Route::get('/bookings/{id}/payment/status', [BookingController::class, 'paymentStatus']);
+Route::post('/payments/midtrans/notification', [BookingController::class, 'midtransNotification']);
 Route::get('/bookings/{id}', [BookingController::class, 'show']);
 Route::get('/profile/{id}', [AuthController::class, 'profile']);
 Route::put('/profile/{id}', [AuthController::class, 'updateProfile']);

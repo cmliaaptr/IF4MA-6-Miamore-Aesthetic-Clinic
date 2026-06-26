@@ -26,8 +26,18 @@ class Booking extends Model
         'catatan',
         'total_pembayaran',
         'metode_pembayaran',
+        'midtrans_transaction_id',
+        'midtrans_transaction_status',
+        'qris_url',
+        'payment_expires_at',
+        'paid_at',
         'status_booking',
         'status_pembayaran',
+    ];
+
+    protected $casts = [
+        'payment_expires_at' => 'datetime',
+        'paid_at' => 'datetime',
     ];
 
     public function pelanggan()

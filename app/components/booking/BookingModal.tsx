@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Booking, {
   BookingFieldChangeEvent,
   BookingStep,
@@ -33,6 +33,15 @@ type BookingModalProps = {
   onClose: () => void;
 };
 
+type PaymentInfo = {
+  order_id?: string;
+  transaction_status?: string | null;
+  qris_url?: string | null;
+  status_pembayaran?: string;
+  expires_at?: string | null;
+  paid_at?: string | null;
+};
+
 export default function BookingModal({
   isOpen,
   selectedTreatment,
@@ -48,6 +57,8 @@ export default function BookingModal({
   const [doctorOptions, setDoctorOptions] = useState<SelectOption[]>([]);
   const [paymentSeconds, setPaymentSeconds] = useState(15 * 60);
   const [paymentCompletedAt, setPaymentCompletedAt] = useState("");
+  const [qrisUrl, setQrisUrl] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState("Belum Dibayar");
 
   const treatmentOptions = useMemo(
     () => createTreatmentOptions(selectedTreatment, availableTreatments),
@@ -69,6 +80,21 @@ export default function BookingModal({
 
   const displayTreatment = formData.treatment || selectedTreatment?.name || "Facial Treatment";
   const displayTherapist = formData.therapist || "-";
+
+  const applyPaymentInfo = useCallback((payment?: PaymentInfo | null) => {
+    if (!payment) return;
+
+    setQrisUrl(payment.qris_url || "");
+    setPaymentStatus(payment.status_pembayaran || payment.transaction_status || "Menunggu");
+
+    if (payment.expires_at) {
+      const secondsLeft = Math.max(
+        Math.floor((new Date(payment.expires_at).getTime() - Date.now()) / 1000),
+        0
+      );
+      setPaymentSeconds(secondsLeft);
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchDoctors() {
@@ -115,6 +141,39 @@ export default function BookingModal({
     return () => window.clearInterval(timer);
   }, [step]);
 
+  useEffect(() => {
+    if (step !== "payment" || !bookingId) return;
+
+    const pollStatus = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}/payment/status`, {
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
+        const result = await response.json().catch(() => null);
+        if (!response.ok) return;
+
+        applyPaymentInfo(result?.payment);
+
+        if (result?.payment?.status_pembayaran === "Lunas") {
+          setPaymentCompletedAt(result.payment.paid_at || new Date().toISOString());
+          setStep("success");
+        }
+      } catch {
+        setError(
+          "Belum bisa mengecek status pembayaran otomatis. Pastikan backend Laravel tetap berjalan."
+        );
+      }
+    };
+
+    pollStatus();
+    const timer = window.setInterval(pollStatus, 5000);
+
+    return () => window.clearInterval(timer);
+  }, [applyPaymentInfo, bookingId, step]);
+
   if (!isOpen) return null;
 
   const handleClose = () => {
@@ -124,6 +183,8 @@ export default function BookingModal({
     setBookingId(null);
     setPaymentSeconds(15 * 60);
     setPaymentCompletedAt("");
+    setQrisUrl("");
+    setPaymentStatus("Belum Dibayar");
     setFormData(initialBookingForm);
     onClose();
   };
@@ -175,7 +236,10 @@ export default function BookingModal({
 
       setOrderId(result?.data?.order_id || result?.order_id || orderId);
       setBookingId(typeof result?.data?.id_booking === "number" ? result.data.id_booking : null);
-      setPaymentSeconds(15 * 60);
+      applyPaymentInfo(result?.payment);
+      if (result?.payment_warning) {
+        setError(result.payment_warning);
+      }
       setStep("payment");
     } catch (submitError) {
       setError(
@@ -188,7 +252,7 @@ export default function BookingModal({
     }
   };
 
-  const handleConfirmPayment = async () => {
+  const handleCheckPayment = async () => {
     setError("");
 
     if (!bookingId) {
@@ -214,8 +278,14 @@ export default function BookingModal({
         throw new Error(result?.message || "Pembayaran gagal dikonfirmasi.");
       }
 
-      setPaymentCompletedAt(new Date().toISOString());
-      setStep("success");
+      applyPaymentInfo(result?.payment);
+
+      if (result?.payment?.status_pembayaran === "Lunas") {
+        setPaymentCompletedAt(result.payment.paid_at || new Date().toISOString());
+        setStep("success");
+      } else {
+        setError("Pembayaran belum diterima. Silakan scan QRIS dan tunggu verifikasi otomatis.");
+      }
     } catch (paymentError) {
       setError(
         paymentError instanceof Error
@@ -268,10 +338,12 @@ export default function BookingModal({
               therapist={displayTherapist}
               formData={formData}
               paymentSeconds={paymentSeconds}
+              qrisUrl={qrisUrl}
+              paymentStatus={paymentStatus}
               error={error}
               isSubmitting={isSubmitting}
               onBackToForm={handleBackToForm}
-              onConfirmPayment={handleConfirmPayment}
+              onCheckPayment={handleCheckPayment}
             />
           )}
 

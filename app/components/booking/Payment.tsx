@@ -8,10 +8,12 @@ type PaymentProps = {
   totalPayment: number;
   orderId: string;
   paymentSeconds: number;
+  qrisUrl: string;
+  paymentStatus: string;
   error: string;
   isSubmitting: boolean;
   onBackToForm: () => void;
-  onConfirmPayment: () => void;
+  onCheckPayment: () => void;
 };
 
 export default function Payment({
@@ -21,10 +23,12 @@ export default function Payment({
   totalPayment,
   orderId,
   paymentSeconds,
+  qrisUrl,
+  paymentStatus,
   error,
   isSubmitting,
   onBackToForm,
-  onConfirmPayment,
+  onCheckPayment,
 }: PaymentProps) {
   return (
     <div className="space-y-6">
@@ -59,7 +63,16 @@ export default function Payment({
           <div className="rounded-md border border-neutral-900 bg-white px-8 py-3 text-center">
             <p className="text-xs font-bold leading-tight">QRIS</p>
             <p className="text-[10px] leading-tight">QR Code Standar Pembayaran Nasional</p>
-            <QrisCode />
+            {qrisUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={qrisUrl}
+                alt={`QRIS pembayaran ${orderId}`}
+                className="mx-auto mt-3 h-48 w-48 object-contain"
+              />
+            ) : (
+              <QrisCode />
+            )}
             <p className="mt-2 text-sm">Order ID : {orderId}</p>
           </div>
         </div>
@@ -75,8 +88,11 @@ export default function Payment({
             <p className="text-2xl font-bold">{formatRupiah(totalPayment)}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-semibold">Sisa Waktu Pembayaran</p>
-            <p className="text-2xl font-bold">{formatTimer(paymentSeconds)}</p>
+            <p className="text-sm font-semibold">Status Pembayaran</p>
+            <p className="text-2xl font-bold">{paymentStatus}</p>
+            <p className="text-xs font-semibold text-neutral-700">
+              Sisa waktu {formatTimer(paymentSeconds)}
+            </p>
           </div>
         </div>
 
@@ -92,11 +108,11 @@ export default function Payment({
 
         <button
           type="button"
-          onClick={onConfirmPayment}
+          onClick={onCheckPayment}
           disabled={isSubmitting}
           className="mt-5 w-full rounded-full bg-[#17a900] px-5 py-3 text-lg font-bold text-white hover:bg-[#148f00] disabled:cursor-not-allowed disabled:bg-neutral-400"
         >
-          {isSubmitting ? "Memverifikasi..." : "Saya Sudah Bayar"}
+          {isSubmitting ? "Memverifikasi..." : "Cek Status Pembayaran"}
         </button>
       </section>
     </div>
