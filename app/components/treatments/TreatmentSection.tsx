@@ -1,49 +1,50 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BookingModal from "../booking/BookingModal";
 import TreatmentCard from "./TreatmentCard";
-
-const treatments = [
-  {
-    image: "/images/treatment.jpg",
-    title: "Basmi Flek Coba-Coba",
-    description: "Membasmi flek secara tuntas dan bersih glowing.",
-    category: "1x / Bulan",
-    price: "Rp. 500.000",
-    type: "Flek",
-  },
-  {
-    image: "/images/treatment.jpg",
-    title: "Acne Treatment",
-    description: "Perawatan kulit berjerawat.",
-    category: "1x / Bulan",
-    price: "Rp. 450.000",
-    type: "Acne",
-  },
-  {
-    image: "/images/treatment.jpg",
-    title: "Glowing Treatment",
-    description: "Kulit tampak lebih cerah.",
-    category: "1x / Bulan",
-    price: "Rp. 600.000",
-    type: "Glowing",
-  },
-];
-
-const categories = ["Semua Treatment", "Flek", "Acne", "Glowing"];
+import {
+  createTreatmentCategories,
+  fallbackTreatments,
+  fetchUserTreatments,
+  UserTreatment,
+} from "./treatmentData";
 
 export default function TreatmentSection() {
   const searchParams = useSearchParams();
-  const [selectedTreatment, setSelectedTreatment] = useState<
-    (typeof treatments)[number] | null
-  >(null);
+  const [treatments, setTreatments] = useState<UserTreatment[]>(fallbackTreatments);
+  const [selectedTreatment, setSelectedTreatment] = useState<UserTreatment | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    async function loadTreatments() {
+      setIsLoading(true);
+      setMessage("");
+
+      try {
+        setTreatments(await fetchUserTreatments());
+      } catch (error) {
+        setTreatments(fallbackTreatments);
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Gagal mengambil data treatment."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadTreatments();
+  }, []);
 
   const categoryFromUrl =
     searchParams.get("category") || "Semua Treatment";
 
   const active = categoryFromUrl;
+  const categories = useMemo(() => createTreatmentCategories(treatments), [treatments]);
 
   const filteredTreatments =
     active === "Semua Treatment"
@@ -76,10 +77,22 @@ export default function TreatmentSection() {
           ))}
         </select>
 
+        {isLoading ? (
+          <p className="mb-5 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-600">
+            Memuat treatment...
+          </p>
+        ) : null}
+
+        {message ? (
+          <p className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+            {message}
+          </p>
+        ) : null}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTreatments.map((item, index) => (
+          {filteredTreatments.map((item) => (
             <TreatmentCard
-              key={index}
+              key={item.id}
               image={item.image}
               title={item.title}
               description={item.description}

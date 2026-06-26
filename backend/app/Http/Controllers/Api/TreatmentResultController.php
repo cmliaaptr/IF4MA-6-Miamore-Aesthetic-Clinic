@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Treatment;
 use App\Models\TreatmentResult;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -111,6 +112,7 @@ class TreatmentResultController extends Controller
         return [
             'id' => $booking->id_booking,
             'treatment' => $booking->treatment,
+            'treatmentImage' => $this->findTreatmentImage($booking->treatment),
             'schedule' => $this->formatSchedule($booking),
             'doctor' => $booking->dokter_terapis ?: '-',
             'status' => $status,
@@ -193,5 +195,14 @@ class TreatmentResultController extends Controller
         $time = substr((string) $booking->waktu_booking, 0, 5);
 
         return trim($date . ', ' . $time . ' WIB');
+    }
+
+    private function findTreatmentImage(?string $treatmentName): ?string
+    {
+        if (!$treatmentName) {
+            return null;
+        }
+
+        return Treatment::where('nama_treatment', $treatmentName)->value('foto');
     }
 }

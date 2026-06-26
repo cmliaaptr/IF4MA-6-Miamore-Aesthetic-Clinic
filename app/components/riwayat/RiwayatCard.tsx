@@ -1,3 +1,5 @@
+import Image from "next/image";
+import type { SyntheticEvent } from "react";
 import RiwayatStatusBadge from "./RiwayatStatusBadge";
 import type { RiwayatItem } from "./RiwayatTypes";
 
@@ -7,10 +9,28 @@ type RiwayatCardProps = {
 };
 
 export default function RiwayatCard({ item, onDetail }: RiwayatCardProps) {
+  const handleImageError = (event: SyntheticEvent<HTMLImageElement>) => {
+    const imageElement = event.currentTarget;
+
+    if (imageElement.src.endsWith("/images/treatment.jpg")) return;
+
+    imageElement.src = "/images/treatment.jpg";
+  };
+
   return (
     <article className="rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.18)] sm:p-6">
       <div className="grid gap-5 sm:grid-cols-[150px_1fr]">
-        <div className="h-[130px] w-[130px] rounded-full bg-gray-300 sm:h-[150px] sm:w-[150px]" />
+        <div className="relative h-[130px] w-[130px] overflow-hidden rounded-full bg-gray-200 sm:h-[150px] sm:w-[150px]">
+          <Image
+            src={item.treatmentImage || "/images/treatment.jpg"}
+            alt={item.treatment}
+            fill
+            sizes="150px"
+            unoptimized
+            onError={handleImageError}
+            className="object-cover"
+          />
+        </div>
 
         <div className="min-w-0">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

@@ -2,6 +2,7 @@
 
 import { Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
+import type { SyntheticEvent } from "react";
 import type { TreatmentItem } from "@/types/dashboard";
 
 type TreatmentTableProps = {
@@ -11,7 +12,7 @@ type TreatmentTableProps = {
 };
 
 function formatPrice(price: string) {
-  const numericPrice = Number(String(price).replace(/[^\d]/g, ""));
+  const numericPrice = Number.parseFloat(String(price));
 
   if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
     return price || "-";
@@ -33,6 +34,14 @@ function getImageSource(photo: string) {
   if (photo.startsWith("http") || photo.startsWith("/")) return photo;
 
   return `/images/${photo}`;
+}
+
+function handleImageError(event: SyntheticEvent<HTMLImageElement>) {
+  const image = event.currentTarget;
+
+  if (image.src.endsWith("/images/treatment.jpg")) return;
+
+  image.src = "/images/treatment.jpg";
 }
 
 export default function TreatmentTable({
@@ -70,6 +79,7 @@ export default function TreatmentTable({
                   width={120}
                   height={76}
                   unoptimized
+                  onError={handleImageError}
                   className="treatment-table-image"
                 />
               </td>

@@ -2,50 +2,44 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import type { SyntheticEvent } from "react";
+import { useEffect, useState } from "react";
 import BookingModal from "../booking/BookingModal";
-
-const treatments = [
-  {
-    title: "Acne",
-    desc: "Solusi untuk kulit berjerawat dan bekas jerawat.",
-    detail:
-      "Treatment Acne membantu mengurangi jerawat aktif, membersihkan pori-pori, serta merawat bekas jerawat agar kulit tampak lebih sehat.",
-    image: "/images/acne.jpg",
-  },
-  {
-    title: "Flek",
-    desc: "Perawatan untuk noda hitam dan warna kulit tidak merata.",
-    detail:
-      "Treatment Flek membantu menyamarkan noda hitam, hiperpigmentasi, dan warna kulit tidak merata agar kulit tampak lebih cerah.",
-    image: "/images/flek.jpg",
-  },
-  {
-    title: "Brightening",
-    desc: "Treatment untuk kulit tampak cerah dan sehat.",
-    detail:
-      "Treatment Brightening membantu mencerahkan kulit kusam, membuat wajah tampak lebih fresh, bersih, dan glowing.",
-    image: "/images/brightening.jpg",
-  },
-  {
-    title: "Anti Aging",
-    desc: "Membantu kulit terlihat lebih kencang dan segar.",
-    detail:
-      "Treatment Anti Aging membantu merawat tanda-tanda penuaan seperti garis halus, kulit kendur, dan tekstur kulit yang kurang elastis.",
-    image: "/images/anti-aging.jpeg",
-  },
-];
+import {
+  fallbackTreatments,
+  fetchUserTreatments,
+  UserTreatment,
+} from "../treatments/treatmentData";
 
 type Treatment = {
   title: string;
   desc: string;
-  detail: string;
   image: string;
+  price: string;
 };
 
 export default function TreatmentSection() {
+  const [treatments, setTreatments] = useState<Treatment[]>(() =>
+    fallbackTreatments.map(mapLandingTreatment)
+  );
   const [selectedTreatment, setSelectedTreatment] =
     useState<Treatment | null>(null);
+
+  useEffect(() => {
+    async function loadTreatments() {
+      try {
+        const result = await fetchUserTreatments();
+        setTreatments(result.map(mapLandingTreatment));
+      } catch {
+        setTreatments(fallbackTreatments.map(mapLandingTreatment));
+      }
+    }
+
+    loadTreatments();
+  }, []);
+
+  const sliderTreatments =
+    treatments.length > 0 ? [...treatments, ...treatments] : [];
 
   return (
     <section className="overflow-hidden bg-orange-600 px-5 py-16 text-white md:px-10 md:py-20 lg:px-20">
@@ -69,7 +63,7 @@ export default function TreatmentSection() {
 
         <div className="mask-scroll overflow-hidden">
           <div className="flex animate-scroll-left gap-5 md:gap-6">
-            {[...treatments, ...treatments].map((item, index) => (
+            {sliderTreatments.map((item, index) => (
               <TreatmentCard
                 key={`${item.title}-${index}`}
                 title={item.title}
@@ -85,12 +79,27 @@ export default function TreatmentSection() {
       <BookingModal
         isOpen={Boolean(selectedTreatment)}
         selectedTreatment={
-          selectedTreatment ? { name: selectedTreatment.title } : null
+          selectedTreatment
+            ? { name: selectedTreatment.title, price: selectedTreatment.price }
+            : null
         }
+        availableTreatments={treatments.map((treatment) => ({
+          name: treatment.title,
+          price: treatment.price,
+        }))}
         onClose={() => setSelectedTreatment(null)}
       />
     </section>
   );
+}
+
+function mapLandingTreatment(treatment: UserTreatment): Treatment {
+  return {
+    title: treatment.title,
+    desc: treatment.description,
+    image: treatment.image,
+    price: treatment.price,
+  };
 }
 
 type TreatmentCardProps = {
@@ -106,6 +115,14 @@ function TreatmentCard({
   image,
   onBooking,
 }: TreatmentCardProps) {
+  const handleImageError = (event: SyntheticEvent<HTMLImageElement>) => {
+    const imageElement = event.currentTarget;
+
+    if (imageElement.src.endsWith("/images/treatment.jpg")) return;
+
+    imageElement.src = "/images/treatment.jpg";
+  };
+
   return (
     <article className="w-64 shrink-0 overflow-hidden rounded-3xl bg-white text-neutral-900 shadow-xl sm:w-72">
       <div className="relative h-40 sm:h-48">
@@ -114,6 +131,8 @@ function TreatmentCard({
           alt={title}
           fill
           sizes="280px"
+          onError={handleImageError}
+          unoptimized
           className="object-cover"
         />
       </div>

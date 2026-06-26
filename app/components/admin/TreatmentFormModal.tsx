@@ -10,6 +10,7 @@ type TreatmentFormData = {
   harga: string;
   durasi: string;
   foto: string;
+  fotoFile: File | null;
   deskripsi: string;
 };
 
@@ -26,6 +27,7 @@ const initialFormValue: TreatmentFormData = {
   harga: "",
   durasi: "",
   foto: "",
+  fotoFile: null,
   deskripsi: "",
 };
 
@@ -44,9 +46,10 @@ export default function TreatmentFormModal({
     if (mode === "edit" && initialData) {
       setFormData({
         nama_treatment: initialData.name,
-        harga: String(initialData.price),
+        harga: formatEditablePrice(initialData.price),
         durasi: String(initialData.duration),
         foto: initialData.photo,
+        fotoFile: null,
         deskripsi: initialData.description,
       });
     } else {
@@ -77,6 +80,7 @@ export default function TreatmentFormModal({
       setFormData((prev) => ({
         ...prev,
         foto: file.name,
+        fotoFile: file,
       }));
     }
   };
@@ -97,6 +101,13 @@ export default function TreatmentFormModal({
     if (!formData.harga.trim()) {
       toast.error(
         "Harga wajib diisi"
+      );
+      return;
+    }
+
+    if (Number(normalizePrice(formData.harga)) <= 0) {
+      toast.error(
+        "Harga harus berupa angka lebih dari 0"
       );
       return;
     }
@@ -172,7 +183,9 @@ export default function TreatmentFormModal({
           <input
             id="harga"
             name="harga"
-            type="number"
+            type="text"
+            inputMode="numeric"
+            placeholder="Contoh: 20.000"
             value={formData.harga}
             onChange={handleChange}
           />
@@ -251,4 +264,32 @@ export default function TreatmentFormModal({
       </form>
     </Modal>
   );
+}
+
+function formatEditablePrice(price: string) {
+  const parsedPrice = Number.parseFloat(String(price));
+
+  if (!Number.isFinite(parsedPrice)) {
+    return price || "";
+  }
+
+  return new Intl.NumberFormat("id-ID", {
+    maximumFractionDigits: 0,
+  }).format(parsedPrice);
+}
+
+function normalizePrice(price: string) {
+  const cleanedPrice = price.replace(/[^\d,\\.]/g, "").trim();
+
+  if (!cleanedPrice) return "0";
+
+  if (cleanedPrice.includes(",")) {
+    return cleanedPrice.replace(/\./g, "").replace(",", ".");
+  }
+
+  if (/^\d+\.\d{1,2}$/.test(cleanedPrice)) {
+    return cleanedPrice;
+  }
+
+  return cleanedPrice.replace(/\./g, "");
 }

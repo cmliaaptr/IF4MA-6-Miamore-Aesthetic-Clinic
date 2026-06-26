@@ -13,6 +13,7 @@ type TreatmentFormData = {
   harga: string;
   durasi: string;
   foto: string;
+  fotoFile: File | null;
   deskripsi: string;
 };
 
@@ -44,22 +45,14 @@ export default function TreatmentPage() {
 
   const handleAddTreatment = async (data: TreatmentFormData) => {
     try {
+      const payload = createTreatmentFormData(data, 0);
+
       const response = await fetch("http://127.0.0.1:8000/api/treatments", {
         method: "POST",
-
         headers: {
-          "Content-Type": "application/json",
           Accept: "application/json",
         },
-
-        body: JSON.stringify({
-          nama_treatment: data.nama_treatment,
-          deskripsi: data.deskripsi,
-          harga: data.harga,
-          diskon: 0,
-          durasi: data.durasi,
-          foto: data.foto,
-        }),
+        body: payload,
       });
 
       if (!response.ok) {
@@ -85,22 +78,20 @@ export default function TreatmentPage() {
     if (!selectedTreatment) return;
 
     try {
+      const payload = createTreatmentFormData(
+        data,
+        Number(selectedTreatment.discount || 0)
+      );
+      payload.append("_method", "PUT");
+
       const response = await fetch(
         `http://127.0.0.1:8000/api/treatments/${selectedTreatment.id}`,
         {
-          method: "PUT",
+          method: "POST",
           headers: {
-            "Content-Type": "application/json",
             Accept: "application/json",
           },
-          body: JSON.stringify({
-            nama_treatment: data.nama_treatment,
-            deskripsi: data.deskripsi,
-            harga: data.harga,
-            diskon: selectedTreatment.discount || 0,
-            durasi: data.durasi,
-            foto: data.foto,
-          }),
+          body: payload,
         },
       );
 
@@ -235,4 +226,36 @@ export default function TreatmentPage() {
       />
     </section>
   );
+}
+
+function createTreatmentFormData(data: TreatmentFormData, discount: number) {
+  const payload = new FormData();
+
+  payload.append("nama_treatment", data.nama_treatment);
+  payload.append("deskripsi", data.deskripsi);
+  payload.append("harga", normalizePrice(data.harga));
+  payload.append("diskon", String(discount));
+  payload.append("durasi", data.durasi);
+
+  if (data.fotoFile) {
+    payload.append("foto", data.fotoFile);
+  }
+
+  return payload;
+}
+
+function normalizePrice(price: string) {
+  const cleanedPrice = price.replace(/[^\d,\\.]/g, "").trim();
+
+  if (!cleanedPrice) return "0";
+
+  if (cleanedPrice.includes(",")) {
+    return cleanedPrice.replace(/\./g, "").replace(",", ".");
+  }
+
+  if (/^\d+\.\d{1,2}$/.test(cleanedPrice)) {
+    return cleanedPrice;
+  }
+
+  return cleanedPrice.replace(/\./g, "");
 }

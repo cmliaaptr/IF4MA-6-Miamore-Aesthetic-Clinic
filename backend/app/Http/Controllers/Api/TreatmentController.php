@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Treatment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class TreatmentController extends Controller
 {
@@ -29,16 +30,18 @@ class TreatmentController extends Controller
         $request->validate([
             'nama_treatment' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
-            'foto' => 'nullable|string',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'harga' => 'required|numeric',
             'diskon' => 'nullable|numeric',
             'durasi' => 'required|string|max:100',
         ]);
 
+        $fotoUrl = $this->storePhoto($request);
+
         $treatment = Treatment::create([
             'nama_treatment' => $request->nama_treatment,
             'deskripsi' => $request->deskripsi,
-            'foto' => $request->foto,
+            'foto' => $fotoUrl,
             'harga' => $request->harga,
             'diskon' => $request->diskon,
             'durasi' => $request->durasi,
@@ -86,16 +89,20 @@ class TreatmentController extends Controller
             'deskripsi' => 'nullable|string',
             'harga' => 'required|numeric',
             'durasi' => 'required|string|max:100',
-            'foto' => 'nullable|string',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'diskon' => 'nullable|numeric',
         ]);
+
+        $fotoUrl = $request->hasFile('foto')
+            ? $this->storePhoto($request, $treatment)
+            : $treatment->foto;
 
         $treatment->update([
             'nama_treatment' => $request->nama_treatment,
             'deskripsi' => $request->deskripsi,
             'harga' => $request->harga,
             'durasi' => $request->durasi,
-            'foto' => $request->foto,
+            'foto' => $fotoUrl,
             'diskon' => $request->diskon,
         ]);
 
@@ -123,5 +130,25 @@ class TreatmentController extends Controller
         return response()->json([
             'message' => 'Treatment berhasil dihapus'
         ]);
+    }
+
+    private function storePhoto(Request $request, ?Treatment $existingTreatment = null): ?string
+    {
+        if (!$request->hasFile('foto')) {
+            return null;
+        }
+
+        if ($existingTreatment?->foto) {
+            $oldPath = parse_url($existingTreatment->foto, PHP_URL_PATH);
+            $oldPath = $oldPath ? str_replace('/storage/', '', $oldPath) : null;
+
+            if ($oldPath) {
+                Storage::disk('public')->delete($oldPath);
+            }
+        }
+
+        $path = $request->file('foto')->store('treatments', 'public');
+
+        return Storage::disk('public')->url($path);
     }
 }

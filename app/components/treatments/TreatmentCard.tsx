@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import type { SyntheticEvent } from "react";
 import toast from "react-hot-toast";
 
 type TreatmentCardProps = {
@@ -41,6 +42,14 @@ export default function TreatmentCard({
     onBooking();
   };
 
+  const handleImageError = (event: SyntheticEvent<HTMLImageElement>) => {
+    const imageElement = event.currentTarget;
+
+    if (imageElement.src.endsWith("/images/treatment.jpg")) return;
+
+    imageElement.src = "/images/treatment.jpg";
+  };
+
   return (
     <div className="overflow-hidden rounded-xl bg-white border border-gray-200 shadow-sm">
       <div className="relative w-full h-[150px] sm:h-[170px]">
@@ -48,6 +57,9 @@ export default function TreatmentCard({
           src={image}
           alt={title}
           fill
+          onError={handleImageError}
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          unoptimized
           className="object-cover"
         />
       </div>
