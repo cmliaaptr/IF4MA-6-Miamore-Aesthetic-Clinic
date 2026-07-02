@@ -6,7 +6,6 @@ export default function DokterHeader() {
       <ProfileDropdown
         name="Dokter"
         profileHref="/dokter/profile"
-        settingsHref="/dokter/settings"
       />
     </header>
   );

@@ -13,6 +13,7 @@ import {
   BookOpen,
   FileText,
   LogOut,
+  FlaskConical,
 } from "lucide-react";
 import LogoutConfirmModal from "./LogoutConfirmModal";
 
@@ -20,6 +21,7 @@ import LogoutConfirmModal from "./LogoutConfirmModal";
 const menuItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Treatment", href: "/admin/treatment", icon: Stethoscope },
+  { label: "Aset Treatment", href: "/admin/aset-treatment", icon: FlaskConical },
   { label: "Pelanggan", href: "/admin/pelanggan", icon: Users },
   { label: "Pembayaran", href: "/admin/pembayaran", icon: ReceiptText },
   { label: "Jadwal Dokter", href: "/admin/jadwal-dokter", icon: CalendarDays },

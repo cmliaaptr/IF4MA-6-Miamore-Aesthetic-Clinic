@@ -10,6 +10,7 @@ import {
   fetchUserTreatments,
   UserTreatment,
 } from "../treatments/treatmentData";
+import { TREATMENT_IMAGE_FALLBACK } from "../treatments/treatmentImage";
 
 type Treatment = {
   title: string;
@@ -118,9 +119,9 @@ function TreatmentCard({
   const handleImageError = (event: SyntheticEvent<HTMLImageElement>) => {
     const imageElement = event.currentTarget;
 
-    if (imageElement.src.endsWith("/images/treatment.jpg")) return;
+    if (imageElement.src.endsWith(TREATMENT_IMAGE_FALLBACK)) return;
 
-    imageElement.src = "/images/treatment.jpg";
+    imageElement.src = TREATMENT_IMAGE_FALLBACK;
   };
 
   return (

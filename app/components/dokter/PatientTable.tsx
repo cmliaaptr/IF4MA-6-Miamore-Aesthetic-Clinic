@@ -1,4 +1,4 @@
-type PatientStatus = "Konfirmasi" | "Tertunda" | "Booking";
+export type PatientStatus = "Konfirmasi" | "Tertunda" | "Booking";
 
 export type PatientSchedule = {
   id: number;
@@ -32,10 +32,18 @@ export default function PatientTable({ data }: { data: PatientSchedule[] }) {
           </tr>
         </thead>
         <tbody>
-          {data.map((item) => (
+          {data.length === 0 ? (
+            <tr>
+              <td colSpan={4} className="px-4 py-8 text-sm font-semibold text-neutral-500">
+                Belum ada booking pasien dari customer.
+              </td>
+            </tr>
+          ) : null}
+
+          {data.map((item, index) => (
             <tr key={item.id} className="text-sm text-neutral-800">
               <td className="border-r border-neutral-200 px-4 py-2.5">
-                {item.id}
+                {index + 1}
               </td>
               <td className="border-r border-neutral-200 px-4 py-2.5">
                 {item.name}

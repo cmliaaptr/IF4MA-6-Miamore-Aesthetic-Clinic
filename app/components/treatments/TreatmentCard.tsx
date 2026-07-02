@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { SyntheticEvent } from "react";
 import toast from "react-hot-toast";
+import { TREATMENT_IMAGE_FALLBACK } from "./treatmentImage";
 
 type TreatmentCardProps = {
   image: string;
@@ -45,9 +46,9 @@ export default function TreatmentCard({
   const handleImageError = (event: SyntheticEvent<HTMLImageElement>) => {
     const imageElement = event.currentTarget;
 
-    if (imageElement.src.endsWith("/images/treatment.jpg")) return;
+    if (imageElement.src.endsWith(TREATMENT_IMAGE_FALLBACK)) return;
 
-    imageElement.src = "/images/treatment.jpg";
+    imageElement.src = TREATMENT_IMAGE_FALLBACK;
   };
 
   return (

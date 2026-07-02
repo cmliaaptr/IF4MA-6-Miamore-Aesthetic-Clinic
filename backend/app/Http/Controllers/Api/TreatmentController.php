@@ -149,6 +149,6 @@ class TreatmentController extends Controller
 
         $path = $request->file('foto')->store('treatments', 'public');
 
-        return Storage::disk('public')->url($path);
+        return $request->getSchemeAndHttpHost() . Storage::disk('public')->url($path);
     }
 }

@@ -1,76 +1,71 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CalendarDays, UserRound } from "lucide-react";
 import PatientTable, {
   type PatientSchedule,
 } from "../components/dokter/PatientTable";
 import StatCard from "../components/dokter/StatCard";
-import { CalendarDays, UserRound } from "lucide-react";
-
-const stats = [
-  {
-    title: "Total Pelanggan",
-    value: "50",
-    icon: UserRound,
-    className: "bg-blue-50",
-  },
-  {
-    title: "Jadwal Hari Ini",
-    value: "15",
-    icon: CalendarDays,
-    className: "bg-yellow-50",
-  },
-];
-
-const schedules: PatientSchedule[] = [
-  {
-    id: 1,
-    name: "Putri Camelia Sari",
-    treatment: "Facial Glow",
-    status: "Konfirmasi",
-  },
-  {
-    id: 2,
-    name: "Ramadhani Akbar",
-    treatment: "Acne Treatment",
-    status: "Tertunda",
-  },
-  {
-    id: 3,
-    name: "Dewi Melati Sukma",
-    treatment: "Whitening Facial",
-    status: "Konfirmasi",
-  },
-  {
-    id: 4,
-    name: "Andi Syahputra",
-    treatment: "Botox",
-    status: "Booking",
-  },
-  {
-    id: 5,
-    name: "Putri Camelia Sari",
-    treatment: "Facial Glow",
-    status: "Konfirmasi",
-  },
-  {
-    id: 6,
-    name: "Ramadhani Akbar",
-    treatment: "Acne Treatment",
-    status: "Tertunda",
-  },
-  {
-    id: 7,
-    name: "Dewi Melati Sukma",
-    treatment: "Whitening Facial",
-    status: "Konfirmasi",
-  },
-  {
-    id: 8,
-    name: "Andi Syahputra",
-    treatment: "Botox",
-    status: "Booking",
-  },
-];
+import {
+  emptyDoctorBookingSummary,
+  fetchDoctorBookings,
+  getLoggedInDoctorName,
+  type DoctorBookingSummary,
+} from "../components/dokter/booking/doctorBookingApi";
 
 export default function DokterDashboardPage() {
+  const [schedules, setSchedules] = useState<PatientSchedule[]>([]);
+  const [summary, setSummary] = useState<DoctorBookingSummary>(
+    emptyDoctorBookingSummary
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const stats = useMemo(
+    () => [
+      {
+        title: "Total Pelanggan",
+        value: String(summary.total_pelanggan),
+        icon: UserRound,
+        className: "bg-blue-50",
+      },
+      {
+        title: "Jadwal Hari Ini",
+        value: String(summary.jadwal_hari_ini),
+        icon: CalendarDays,
+        className: "bg-yellow-50",
+      },
+    ],
+    [summary]
+  );
+
+  const loadBookings = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const doctorName = getLoggedInDoctorName();
+      const result = await fetchDoctorBookings(doctorName);
+
+      setSchedules(result.schedules.slice(0, 8));
+      setSummary(result.summary);
+    } catch (fetchError) {
+      setSchedules([]);
+      setSummary(emptyDoctorBookingSummary);
+      setError(
+        fetchError instanceof Error
+          ? fetchError.message
+          : "Gagal mengambil data dashboard dokter."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(loadBookings);
+  }, [loadBookings]);
+
   return (
     <section className="mx-auto max-w-6xl">
       <h1 className="text-4xl font-bold tracking-normal md:text-[42px]">
@@ -84,6 +79,18 @@ export default function DokterDashboardPage() {
       </div>
 
       <div className="mt-14">
+        {isLoading ? (
+          <p className="mb-4 rounded-md bg-white px-4 py-3 text-sm font-semibold text-neutral-600">
+            Memuat data booking customer...
+          </p>
+        ) : null}
+
+        {error ? (
+          <p className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+            {error}
+          </p>
+        ) : null}
+
         <PatientTable data={schedules} />
       </div>
     </section>

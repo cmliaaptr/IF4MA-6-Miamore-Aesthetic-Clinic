@@ -7,6 +7,7 @@ import {
   BookOpenText,
   CalendarCheck2,
   CalendarDays,
+  FlaskConical,
   LayoutDashboard,
   LogOut,
 } from "lucide-react";
@@ -19,6 +20,11 @@ const menuItems = [
     label: "Hasil Treatment",
     href: "/dokter/hasil-treatment",
     icon: CalendarCheck2,
+  },
+  {
+    label: "Aset Treatment",
+    href: "/dokter/aset-treatment",
+    icon: FlaskConical,
   },
 ];
 

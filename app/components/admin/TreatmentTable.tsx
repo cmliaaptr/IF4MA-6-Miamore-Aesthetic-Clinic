@@ -4,6 +4,10 @@ import { Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
 import type { SyntheticEvent } from "react";
 import type { TreatmentItem } from "@/types/dashboard";
+import {
+  getTreatmentImageSource,
+  TREATMENT_IMAGE_FALLBACK,
+} from "../treatments/treatmentImage";
 
 type TreatmentTableProps = {
   data: TreatmentItem[];
@@ -29,19 +33,12 @@ function formatTreatmentTime(duration: string) {
   return duration || "-";
 }
 
-function getImageSource(photo: string) {
-  if (!photo) return "/images/treatment.jpg";
-  if (photo.startsWith("http") || photo.startsWith("/")) return photo;
-
-  return `/images/${photo}`;
-}
-
 function handleImageError(event: SyntheticEvent<HTMLImageElement>) {
   const image = event.currentTarget;
 
-  if (image.src.endsWith("/images/treatment.jpg")) return;
+  if (image.src.endsWith(TREATMENT_IMAGE_FALLBACK)) return;
 
-  image.src = "/images/treatment.jpg";
+  image.src = TREATMENT_IMAGE_FALLBACK;
 }
 
 export default function TreatmentTable({
@@ -74,7 +71,7 @@ export default function TreatmentTable({
               </td>
               <td>
                 <Image
-                  src={getImageSource(item.photo)}
+                  src={getTreatmentImageSource(item.photo)}
                   alt={item.name}
                   width={120}
                   height={76}

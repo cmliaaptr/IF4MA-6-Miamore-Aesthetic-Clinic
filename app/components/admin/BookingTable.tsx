@@ -20,6 +20,12 @@ export default function BookingTable({ data }: BookingTableProps) {
         </thead>
 
         <tbody>
+          {data.length === 0 ? (
+            <tr>
+              <td colSpan={4}>Belum ada booking customer.</td>
+            </tr>
+          ) : null}
+
           {data.map((item, index) => (
             <tr key={item.id}>
               <td>{index + 1}</td>

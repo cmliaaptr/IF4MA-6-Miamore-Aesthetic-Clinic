@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  getTreatmentImageSource,
+  TREATMENT_IMAGE_FALLBACK,
+} from "./treatmentImage";
+
 export type TreatmentApiItem = {
   id_treatment: number;
   nama_treatment: string;
@@ -26,7 +31,7 @@ export const API_BASE_URL =
 export const fallbackTreatments: UserTreatment[] = [
   {
     id: 1,
-    image: "/images/treatment.jpg",
+    image: TREATMENT_IMAGE_FALLBACK,
     title: "Basmi Flek Coba-Coba",
     description: "Membasmi flek secara tuntas dan bersih glowing.",
     category: "1x / Bulan",
@@ -35,7 +40,7 @@ export const fallbackTreatments: UserTreatment[] = [
   },
   {
     id: 2,
-    image: "/images/treatment.jpg",
+    image: TREATMENT_IMAGE_FALLBACK,
     title: "Acne Treatment",
     description: "Perawatan kulit berjerawat.",
     category: "1x / Bulan",
@@ -44,7 +49,7 @@ export const fallbackTreatments: UserTreatment[] = [
   },
   {
     id: 3,
-    image: "/images/treatment.jpg",
+    image: TREATMENT_IMAGE_FALLBACK,
     title: "Glowing Treatment",
     description: "Kulit tampak lebih cerah.",
     category: "1x / Bulan",
@@ -60,7 +65,7 @@ export function parseApiText(text: string) {
 export function mapTreatmentItem(item: TreatmentApiItem): UserTreatment {
   return {
     id: item.id_treatment,
-    image: item.foto || "/images/treatment.jpg",
+    image: getTreatmentImageSource(item.foto),
     title: item.nama_treatment,
     description: item.deskripsi || "Treatment Miamore Aesthetic Clinic.",
     category: item.durasi || "-",

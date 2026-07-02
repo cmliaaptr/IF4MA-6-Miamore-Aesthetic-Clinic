@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Pembayaran;
 use App\Models\User;
 use App\Services\MidtransQrisService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Throwable;
@@ -22,6 +23,61 @@ class BookingController extends Controller
         return response()->json([
             'message' => 'Data booking berhasil diambil',
             'data' => Booking::with('pelanggan:id_user,username,email,role')->latest()->get(),
+        ]);
+    }
+
+    public function adminDashboard()
+    {
+        $bookings = Booking::with('pelanggan:id_user,username,email,role')
+            ->latest()
+            ->get();
+        $today = now()->toDateString();
+
+        return response()->json([
+            'message' => 'Data dashboard admin berhasil diambil',
+            'summary' => [
+                'booking_hari_ini' => $bookings
+                    ->filter(fn ($booking) => (string) $booking->tanggal_booking === $today)
+                    ->count(),
+                'tertunda' => $bookings
+                    ->filter(fn ($booking) => $this->adminBookingStatus($booking) === 'Tertunda')
+                    ->count(),
+                'konfirmasi' => $bookings
+                    ->filter(fn ($booking) => $this->adminBookingStatus($booking) === 'Konfirmasi')
+                    ->count(),
+                'total_pelanggan' => $bookings->pluck('id_user')->filter()->unique()->count(),
+            ],
+            'data' => $bookings->map(fn ($booking) => $this->formatAdminDashboardBooking($booking))->values(),
+        ]);
+    }
+
+    public function doctorIndex(Request $request)
+    {
+        $doctorName = $request->query('doctor_name');
+
+        $bookings = Booking::with('pelanggan:id_user,username,email,role')
+            ->when($doctorName, function ($query) use ($doctorName) {
+                $query->where('dokter_terapis', $doctorName);
+            })
+            ->orderBy('tanggal_booking')
+            ->orderBy('waktu_booking')
+            ->get();
+
+        $today = now()->toDateString();
+
+        return response()->json([
+            'message' => 'Data booking dokter berhasil diambil',
+            'summary' => [
+                'total_pelanggan' => $bookings->pluck('id_user')->filter()->unique()->count(),
+                'jadwal_hari_ini' => $bookings
+                    ->filter(fn ($booking) => (string) $booking->tanggal_booking === $today)
+                    ->count(),
+                'total_booking' => $bookings->count(),
+                'terkonfirmasi' => $bookings
+                    ->filter(fn ($booking) => $booking->status_booking === 'Terkonfirmasi')
+                    ->count(),
+            ],
+            'data' => $bookings->map(fn ($booking) => $this->formatDoctorBooking($booking))->values(),
         ]);
     }
 
@@ -196,6 +252,75 @@ class BookingController extends Controller
         } while (Booking::where('order_id', $orderId)->exists());
 
         return $orderId;
+    }
+
+    private function formatDoctorBooking(Booking $booking): array
+    {
+        return [
+            'id' => $booking->id_booking,
+            'id_booking' => $booking->id_booking,
+            'id_user' => $booking->id_user,
+            'name' => $booking->nama_lengkap,
+            'customer_username' => optional($booking->pelanggan)->username,
+            'treatment' => $booking->treatment,
+            'doctor' => $booking->dokter_terapis,
+            'date' => $booking->tanggal_booking
+                ? Carbon::parse($booking->tanggal_booking)->format('d/m/Y')
+                : '-',
+            'time' => substr((string) $booking->waktu_booking, 0, 5),
+            'status' => $this->doctorBookingStatus($booking),
+            'status_booking' => $booking->status_booking,
+            'status_pembayaran' => $booking->status_pembayaran,
+            'payment' => $booking->status_pembayaran,
+            'phone' => $booking->no_telephone,
+            'email' => $booking->email,
+        ];
+    }
+
+    private function formatAdminDashboardBooking(Booking $booking): array
+    {
+        return [
+            'id' => $booking->id_booking,
+            'id_booking' => $booking->id_booking,
+            'id_user' => $booking->id_user,
+            'fullName' => $booking->nama_lengkap,
+            'customerName' => optional($booking->pelanggan)->username,
+            'treatment' => $booking->treatment,
+            'doctor' => $booking->dokter_terapis,
+            'date' => $booking->tanggal_booking
+                ? Carbon::parse($booking->tanggal_booking)->format('d/m/Y')
+                : '-',
+            'time' => substr((string) $booking->waktu_booking, 0, 5),
+            'status' => $this->adminBookingStatus($booking),
+            'status_booking' => $booking->status_booking,
+            'status_pembayaran' => $booking->status_pembayaran,
+        ];
+    }
+
+    private function adminBookingStatus(Booking $booking): string
+    {
+        if ($booking->status_booking === 'Terkonfirmasi' || $booking->status_booking === 'Selesai') {
+            return 'Konfirmasi';
+        }
+
+        if ($booking->status_pembayaran === 'Belum Dibayar' || $booking->status_pembayaran === 'Gagal') {
+            return 'Tertunda';
+        }
+
+        return 'Booking';
+    }
+
+    private function doctorBookingStatus(Booking $booking): string
+    {
+        if ($booking->status_booking === 'Terkonfirmasi' || $booking->status_booking === 'Selesai') {
+            return 'Konfirmasi';
+        }
+
+        if ($booking->status_pembayaran === 'Belum Dibayar' || $booking->status_pembayaran === 'Gagal') {
+            return 'Tertunda';
+        }
+
+        return 'Booking';
     }
 
     private function syncPaymentStatus(Booking $booking, array $payload): void
