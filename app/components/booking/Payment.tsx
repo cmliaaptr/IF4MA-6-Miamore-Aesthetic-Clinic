@@ -14,6 +14,7 @@ type PaymentProps = {
   isSubmitting: boolean;
   onBackToForm: () => void;
   onCheckPayment: () => void;
+  onSimulateSandboxPayment?: () => void;
 };
 
 export default function Payment({
@@ -29,6 +30,7 @@ export default function Payment({
   isSubmitting,
   onBackToForm,
   onCheckPayment,
+  onSimulateSandboxPayment,
 }: PaymentProps) {
   return (
     <div className="space-y-6">
@@ -114,6 +116,17 @@ export default function Payment({
         >
           {isSubmitting ? "Memverifikasi..." : "Cek Status Pembayaran"}
         </button>
+
+        {onSimulateSandboxPayment && (
+          <button
+            type="button"
+            onClick={onSimulateSandboxPayment}
+            disabled={isSubmitting}
+            className="mt-3 w-full rounded-full border border-[#bf9130] bg-white px-5 py-3 text-base font-bold text-[#bf9130] hover:bg-[#fff7e6] disabled:cursor-not-allowed disabled:border-neutral-300 disabled:text-neutral-400"
+          >
+            Simulasi Pembayaran Sandbox
+          </button>
+        )}
       </section>
     </div>
   );

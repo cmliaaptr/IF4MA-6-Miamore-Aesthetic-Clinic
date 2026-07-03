@@ -7,9 +7,10 @@ use App\Models\Booking;
 use App\Models\Pembayaran;
 use App\Models\User;
 use App\Services\MidtransQrisService;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Throwable;
 
 class BookingController extends Controller
@@ -94,7 +95,13 @@ class BookingController extends Controller
             'tanggal_booking' => 'required|date|after_or_equal:today',
             'waktu_booking' => 'required|date_format:H:i',
             'treatment' => 'required|string|max:255',
-            'dokter_terapis' => 'nullable|string|max:255',
+            'dokter_terapis' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::exists('users', 'username')
+                    ->where(fn ($query) => $query->where('role', 'dokter')),
+            ],
             'catatan' => 'nullable|string',
             'total_pembayaran' => 'nullable|numeric|min:0',
             'metode_pembayaran' => 'nullable|string|max:50',
@@ -177,6 +184,7 @@ class BookingController extends Controller
 
             return response()->json([
                 'message' => 'Status pembayaran belum dapat dicek ke Midtrans.',
+                'payment_check_failed' => true,
                 'data' => $booking->load('pelanggan:id_user,username,email,role'),
                 'payment' => $this->paymentPayload($booking),
             ], 502);
@@ -193,9 +201,46 @@ class BookingController extends Controller
         ]);
     }
 
+    public function sandboxPaymentSuccess($id)
+    {
+        if ($this->midtransQris->isProduction()) {
+            return response()->json([
+                'message' => 'Simulasi pembayaran hanya tersedia untuk mode sandbox.',
+            ], 403);
+        }
+
+        $booking = Booking::find($id);
+
+        if (!$booking) {
+            return response()->json([
+                'message' => 'Booking tidak ditemukan',
+            ], 404);
+        }
+
+        $payload = [
+            'order_id' => $booking->order_id,
+            'status_code' => '200',
+            'gross_amount' => (string) ((int) round((float) ($booking->total_pembayaran ?: 0))),
+            'transaction_id' => $booking->midtrans_transaction_id ?: 'SANDBOX-' . strtoupper(Str::random(10)),
+            'transaction_status' => 'settlement',
+            'fraud_status' => 'accept',
+            'payment_type' => 'qris',
+            'settlement_time' => now()->toDateTimeString(),
+        ];
+
+        $this->syncPaymentStatus($booking, $payload);
+
+        return response()->json([
+            'message' => 'Pembayaran sandbox berhasil disimulasikan',
+            'data' => $booking->fresh('pelanggan:id_user,username,email,role'),
+            'payment' => $this->paymentPayload($booking->fresh()),
+        ]);
+    }
+
     public function paymentStatus($id)
     {
         $booking = Booking::find($id);
+        $paymentCheckFailed = false;
 
         if (!$booking) {
             return response()->json([
@@ -209,6 +254,7 @@ class BookingController extends Controller
                 $this->syncPaymentStatus($booking, $status);
             } catch (Throwable $error) {
                 report($error);
+                $paymentCheckFailed = true;
             }
         }
 
@@ -217,6 +263,7 @@ class BookingController extends Controller
         return response()->json([
             'data' => $booking,
             'payment' => $this->paymentPayload($booking),
+            'payment_check_failed' => $paymentCheckFailed,
         ]);
     }
 
@@ -326,6 +373,7 @@ class BookingController extends Controller
     private function syncPaymentStatus(Booking $booking, array $payload): void
     {
         $transactionStatus = $payload['transaction_status'] ?? null;
+        $paidAt = $this->paymentTimeFromPayload($payload);
 
         $updates = [
             'midtrans_transaction_id' => $payload['transaction_id'] ?? $booking->midtrans_transaction_id,
@@ -336,13 +384,13 @@ class BookingController extends Controller
         if ($this->midtransQris->isSuccessfulStatus($payload)) {
             $updates['status_booking'] = 'Terkonfirmasi';
             $updates['status_pembayaran'] = 'Lunas';
-            $updates['paid_at'] = $booking->paid_at ?: now();
+            $updates['paid_at'] = $booking->paid_at ?: $paidAt;
 
             Pembayaran::updateOrCreate(
                 ['id_booking' => $booking->id_booking],
                 [
                     'total_bayar' => $booking->total_pembayaran ?: ($payload['gross_amount'] ?? 0),
-                    'tanggal_bayar' => now(),
+                    'tanggal_bayar' => $paidAt,
                     'metode_bayar' => 'QRIS',
                     'status' => 'Lunas',
                 ]
@@ -371,5 +419,22 @@ class BookingController extends Controller
             'expires_at' => optional($booking->payment_expires_at)->toIso8601String(),
             'paid_at' => optional($booking->paid_at)->toIso8601String(),
         ];
+    }
+
+    private function paymentTimeFromPayload(array $payload): Carbon
+    {
+        $paymentTime = $payload['settlement_time']
+            ?? $payload['transaction_time']
+            ?? null;
+
+        if (!$paymentTime) {
+            return now();
+        }
+
+        try {
+            return Carbon::parse($paymentTime);
+        } catch (Throwable) {
+            return now();
+        }
     }
 }

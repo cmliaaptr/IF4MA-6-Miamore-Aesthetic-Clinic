@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\Pembayaran;
 use Illuminate\Http\Request;
 
@@ -13,9 +14,37 @@ class PembayaranController extends Controller
      */
     public function index()
     {
+        $pembayaran = Booking::with('pembayaran')
+            ->whereNotNull('order_id')
+            ->latest('id_booking')
+            ->get()
+            ->map(function (Booking $booking) {
+                return [
+                    'id_booking' => $booking->id_booking,
+                    'id_pembayaran' => $booking->pembayaran?->id_pembayaran,
+                    'order_id' => $booking->order_id,
+                    'nama_lengkap' => $booking->nama_lengkap,
+                    'treatment' => $booking->treatment,
+                    'dokter_terapis' => $booking->dokter_terapis,
+                    'tanggal_booking' => $booking->tanggal_booking,
+                    'waktu_booking' => $booking->waktu_booking,
+                    'total_pembayaran' => $booking->total_pembayaran,
+                    'metode_pembayaran' => $booking->metode_pembayaran ?: 'QRIS',
+                    'status_booking' => $booking->status_booking,
+                    'status_pembayaran' => $booking->status_pembayaran,
+                    'midtrans_transaction_id' => $booking->midtrans_transaction_id,
+                    'midtrans_transaction_status' => $booking->midtrans_transaction_status,
+                    'qris_url' => $booking->qris_url,
+                    'payment_expires_at' => optional($booking->payment_expires_at)->toIso8601String(),
+                    'paid_at' => optional($booking->paid_at)->toIso8601String(),
+                    'tanggal_bayar' => optional($booking->pembayaran?->tanggal_bayar)->toIso8601String(),
+                    'created_at' => optional($booking->created_at)->toIso8601String(),
+                ];
+            });
+
         return response()->json([
             'message' => 'Data pembayaran berhasil diambil',
-            'data' => Pembayaran::with('booking')->get()
+            'data' => $pembayaran,
         ]);
     }
 

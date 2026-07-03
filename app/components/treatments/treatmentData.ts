@@ -91,7 +91,7 @@ export async function fetchUserTreatments() {
     ? (result.data as TreatmentApiItem[]).map(mapTreatmentItem)
     : [];
 
-  return treatments.length > 0 ? treatments : fallbackTreatments;
+  return treatments;
 }
 
 export function createTreatmentCategories(treatments: UserTreatment[]) {

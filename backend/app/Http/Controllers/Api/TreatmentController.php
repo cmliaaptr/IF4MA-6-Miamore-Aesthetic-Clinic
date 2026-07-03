@@ -14,7 +14,7 @@ class TreatmentController extends Controller
      */
     public function index()
     {
-        $treatments = Treatment::all();
+        $treatments = Treatment::latest()->get();
 
         return response()->json([
             'message' => 'Data treatment berhasil diambil',

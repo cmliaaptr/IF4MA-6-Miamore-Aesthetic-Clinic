@@ -4,12 +4,26 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import BookingModal from "../booking/BookingModal";
+import {
+  fetchUserTreatments,
+  UserTreatment,
+} from "./treatmentData";
 
 export default function TreatmentHero() {
   const router = useRouter();
 
   const [isBookingOpen, setIsBookingOpen] =
     useState(false);
+  const [treatments, setTreatments] =
+    useState<UserTreatment[]>([]);
+
+  const loadTreatments = async () => {
+    try {
+      setTreatments(await fetchUserTreatments());
+    } catch {
+      setTreatments([]);
+    }
+  };
 
   const handleBooking = () => {
     const user = localStorage.getItem("user");
@@ -28,6 +42,7 @@ export default function TreatmentHero() {
       return;
     }
 
+    loadTreatments();
     setIsBookingOpen(true);
   };
 
@@ -73,6 +88,10 @@ export default function TreatmentHero() {
 
       <BookingModal
         isOpen={isBookingOpen}
+        availableTreatments={treatments.map((treatment) => ({
+          name: treatment.title,
+          price: treatment.price,
+        }))}
         onClose={() =>
           setIsBookingOpen(false)
         }

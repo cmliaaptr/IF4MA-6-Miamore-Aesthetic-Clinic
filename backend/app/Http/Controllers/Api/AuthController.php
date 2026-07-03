@@ -182,6 +182,8 @@ class AuthController extends Controller
                 'data' => $doctors->map(fn($doctor) => [
                     'id_user' => $doctor->id_user,
                     'username' => $doctor->username,
+                    'email' => $doctor->email,
+                    'role' => $doctor->role,
                 ])
             ]);
         } catch (\Exception $e) {

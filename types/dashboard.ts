@@ -47,13 +47,18 @@ export type BookingPageItem = {
   treatment: string;
   date: string;
   time: string;
-  status: "Aktif" | "Tertunda" | "Selesai";
+  status: "Konfirmasi" | "Tertunda" | "Booking";
 };
 
 export type ReportItem = {
   id: number;
   fullName: string;
+  customerName?: string;
   treatment: string;
+  doctor?: string | null;
+  date: string;
+  time: string;
   status: "Konfirmasi" | "Tertunda" | "Booking";
+  status_booking?: string;
+  status_pembayaran?: string;
 };
-

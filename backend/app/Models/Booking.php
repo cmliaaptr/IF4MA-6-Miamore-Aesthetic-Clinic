@@ -49,4 +49,9 @@ class Booking extends Model
     {
         return $this->hasOne(TreatmentResult::class, 'id_booking', 'id_booking');
     }
+
+    public function pembayaran()
+    {
+        return $this->hasOne(Pembayaran::class, 'id_booking', 'id_booking');
+    }
 }

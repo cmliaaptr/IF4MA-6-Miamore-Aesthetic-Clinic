@@ -6,7 +6,6 @@ import type { SyntheticEvent } from "react";
 import { useEffect, useState } from "react";
 import BookingModal from "../booking/BookingModal";
 import {
-  fallbackTreatments,
   fetchUserTreatments,
   UserTreatment,
 } from "../treatments/treatmentData";
@@ -20,19 +19,29 @@ type Treatment = {
 };
 
 export default function TreatmentSection() {
-  const [treatments, setTreatments] = useState<Treatment[]>(() =>
-    fallbackTreatments.map(mapLandingTreatment)
-  );
+  const [treatments, setTreatments] = useState<Treatment[]>([]);
   const [selectedTreatment, setSelectedTreatment] =
     useState<Treatment | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     async function loadTreatments() {
+      setIsLoading(true);
+      setMessage("");
+
       try {
         const result = await fetchUserTreatments();
         setTreatments(result.map(mapLandingTreatment));
-      } catch {
-        setTreatments(fallbackTreatments.map(mapLandingTreatment));
+      } catch (error) {
+        setTreatments([]);
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Gagal mengambil data treatment."
+        );
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -62,19 +71,39 @@ export default function TreatmentSection() {
           </Link>
         </div>
 
-        <div className="mask-scroll overflow-hidden">
-          <div className="flex animate-scroll-left gap-5 md:gap-6">
-            {sliderTreatments.map((item, index) => (
-              <TreatmentCard
-                key={`${item.title}-${index}`}
-                title={item.title}
-                desc={item.desc}
-                image={item.image}
-                onBooking={() => setSelectedTreatment(item)}
-              />
-            ))}
+        {isLoading ? (
+          <p className="rounded-lg bg-white/15 px-4 py-3 text-sm font-semibold text-white">
+            Memuat treatment...
+          </p>
+        ) : null}
+
+        {message ? (
+          <p className="rounded-lg bg-white/15 px-4 py-3 text-sm font-semibold text-white">
+            {message}
+          </p>
+        ) : null}
+
+        {!isLoading && !message && treatments.length === 0 ? (
+          <p className="rounded-lg bg-white/15 px-4 py-3 text-sm font-semibold text-white">
+            Belum ada treatment yang ditambahkan admin.
+          </p>
+        ) : null}
+
+        {sliderTreatments.length > 0 ? (
+          <div className="mask-scroll overflow-hidden">
+            <div className="flex animate-scroll-left gap-5 md:gap-6">
+              {sliderTreatments.map((item, index) => (
+                <TreatmentCard
+                  key={`${item.title}-${index}`}
+                  title={item.title}
+                  desc={item.desc}
+                  image={item.image}
+                  onBooking={() => setSelectedTreatment(item)}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
 
       <BookingModal

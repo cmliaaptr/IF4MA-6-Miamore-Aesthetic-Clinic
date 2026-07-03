@@ -4,19 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, LogOut, Menu, Settings, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
-
-const treatmentMenus = [
-  { name: "Acne Treatment", category: "Acne" },
-  { name: "Flek Treatment", category: "Flek" },
-  { name: "Glowing Treatment", category: "Glowing" },
-  { name: "Anti Aging", category: "Anti Aging" },
-];
+import {
+  fetchUserTreatments,
+  type UserTreatment,
+} from "../treatments/treatmentData";
 
 export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState(false);
   const [openProfileMenu, setOpenProfileMenu] = useState(false);
   const [openMobile, setOpenMobile] = useState(false);
   const [isCustomerLoggedIn, setIsCustomerLoggedIn] = useState(false);
+  const [treatmentMenus, setTreatmentMenus] = useState<UserTreatment[]>([]);
   const logoHref = isCustomerLoggedIn ? "/customer" : "/";
 
   useEffect(() => {
@@ -35,6 +33,18 @@ export default function Navbar() {
     window.addEventListener("storage", checkLoginState);
 
     return () => window.removeEventListener("storage", checkLoginState);
+  }, []);
+
+  useEffect(() => {
+    async function loadTreatmentMenus() {
+      try {
+        setTreatmentMenus(await fetchUserTreatments());
+      } catch {
+        setTreatmentMenus([]);
+      }
+    }
+
+    void Promise.resolve().then(loadTreatmentMenus);
   }, []);
 
   const handleLogout = () => {
@@ -82,14 +92,22 @@ export default function Navbar() {
 
             {openDropdown && (
               <div className="absolute left-0 top-9 z-[10000] w-56 rounded-2xl border border-white/30 bg-white/95 p-3 text-sm shadow-xl backdrop-blur-xl">
+                {treatmentMenus.length === 0 ? (
+                  <p className="px-4 py-2 text-neutral-500">
+                    Belum ada treatment
+                  </p>
+                ) : null}
+
                 {treatmentMenus.map((item) => (
                   <Link
-                    key={item.name}
-                    href={`/treatment?category=${item.category}`}
+                    key={item.id}
+                    href={`/treatment?category=${encodeURIComponent(
+                      item.type
+                    )}`}
                     onClick={() => setOpenDropdown(false)}
                     className="block rounded-xl px-4 py-2 text-neutral-800 hover:bg-yellow-100"
                   >
-                    {item.name}
+                    {item.title}
                   </Link>
                 ))}
               </div>
@@ -149,15 +167,6 @@ export default function Navbar() {
                 Profile Saya
               </Link>
 
-              <Link
-                href="/settings"
-                onClick={() => setOpenProfileMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-yellow-100"
-              >
-                <Settings size={17} />
-                Settings
-              </Link>
-
               <button
                 type="button"
                 onClick={handleLogout}
@@ -176,14 +185,20 @@ export default function Navbar() {
           <div className="space-y-2 text-base font-semibold text-neutral-800">
             <p className="font-semibold text-yellow-700">Treatments</p>
 
+            {treatmentMenus.length === 0 ? (
+              <p className="rounded-xl px-3 py-2 text-neutral-500">
+                Belum ada treatment
+              </p>
+            ) : null}
+
             {treatmentMenus.map((item) => (
               <Link
-                key={item.name}
-                href={`/treatment?category=${item.category}`}
+                key={item.id}
+                href={`/treatment?category=${encodeURIComponent(item.type)}`}
                 onClick={() => setOpenMobile(false)}
                 className="block rounded-xl px-3 py-2 hover:bg-yellow-100"
               >
-                {item.name}
+                {item.title}
               </Link>
             ))}
 

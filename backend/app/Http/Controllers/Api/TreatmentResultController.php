@@ -103,6 +103,8 @@ class TreatmentResultController extends Controller
     {
         $result = $booking->treatmentResult;
         $formattedResult = $this->formatResult($result);
+        $treatment = $this->findTreatment($booking->treatment);
+        $treatmentName = $treatment?->nama_treatment ?: ($booking->treatment ?: 'Treatment Miamore');
         $status = match ($booking->status_booking) {
             'Dibatalkan' => 'Dibatalkan',
             'Terkonfirmasi', 'Selesai' => 'Selesai',
@@ -111,8 +113,11 @@ class TreatmentResultController extends Controller
 
         return [
             'id' => $booking->id_booking,
-            'treatment' => $booking->treatment,
-            'treatmentImage' => $this->findTreatmentImage($booking->treatment),
+            'treatment' => $treatmentName,
+            'treatmentImage' => $treatment?->foto,
+            'treatmentDescription' => $treatment?->deskripsi,
+            'treatmentPrice' => $this->formatRupiah($treatment?->harga),
+            'treatmentDuration' => $treatment?->durasi,
             'schedule' => $this->formatSchedule($booking),
             'doctor' => $booking->dokter_terapis ?: '-',
             'status' => $status,
@@ -125,8 +130,9 @@ class TreatmentResultController extends Controller
                 $formattedResult['recommendation'],
                 $formattedResult['homeCare'],
             ] : [
-                'Hasil treatment belum dikirim oleh dokter.',
-                'Detail akan muncul otomatis setelah form hasil treatment diisi.',
+                'Treatment: ' . $treatmentName,
+                'Jadwal: ' . $this->formatSchedule($booking),
+                'Status pembayaran: ' . $booking->status_pembayaran,
             ],
             'note' => $result
                 ? $formattedResult['controlNote']
@@ -197,12 +203,31 @@ class TreatmentResultController extends Controller
         return trim($date . ', ' . $time . ' WIB');
     }
 
-    private function findTreatmentImage(?string $treatmentName): ?string
+    private function findTreatment(?string $treatmentName): ?Treatment
     {
         if (!$treatmentName) {
             return null;
         }
 
-        return Treatment::where('nama_treatment', $treatmentName)->value('foto');
+        $cleanName = trim(preg_replace('/\s+-\s+Rp\.?\s*[\d.]+.*$/i', '', $treatmentName));
+
+        return Treatment::where('nama_treatment', $treatmentName)
+            ->orWhere('nama_treatment', $cleanName)
+            ->first();
+    }
+
+    private function formatRupiah(mixed $amount): ?string
+    {
+        if ($amount === null || $amount === '') {
+            return null;
+        }
+
+        $numericAmount = (float) $amount;
+
+        if ($numericAmount <= 0) {
+            return null;
+        }
+
+        return 'Rp ' . number_format($numericAmount, 0, ',', '.');
     }
 }

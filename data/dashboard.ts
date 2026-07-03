@@ -120,24 +120,11 @@ export const bookingPageList: BookingPageItem[] = [
     treatment: "Facial Glow",
     date: "02-04-2026",
     time: "10:00",
-    status: "Aktif",
+    status: "Booking",
   },
 ];
 
-export const reportList: ReportItem[] = [
-  { id: 1, fullName: "Putri Camelia Sari", treatment: "Facial Glow", status: "Konfirmasi" },
-  { id: 2, fullName: "Ramadhani Akbar", treatment: "Acne Treatment", status: "Tertunda" },
-  { id: 3, fullName: "Dewi Melati Sukma", treatment: "Whitening Facial", status: "Konfirmasi" },
-  { id: 4, fullName: "Andi Syahputra", treatment: "Botox", status: "Booking" },
-  { id: 5, fullName: "Putri Camelia Sari", treatment: "Facial Glow", status: "Konfirmasi" },
-  { id: 6, fullName: "Ramadhani Akbar", treatment: "Acne Treatment", status: "Tertunda" },
-  { id: 7, fullName: "Dewi Melati Sukma", treatment: "Whitening Facial", status: "Konfirmasi" },
-  { id: 8, fullName: "Andi Syahputra", treatment: "Botox", status: "Booking" },
-  { id: 9, fullName: "Putri Camelia Sari", treatment: "Facial Glow", status: "Konfirmasi" },
-  { id: 10, fullName: "Ramadhani Akbar", treatment: "Acne Treatment", status: "Tertunda" },
-  { id: 11, fullName: "Dewi Melati Sukma", treatment: "Whitening Facial", status: "Konfirmasi" },
-  { id: 12, fullName: "Andi Syahputra", treatment: "Botox", status: "Booking" },
-];
+export const reportList: ReportItem[] = [];
 
 export type PaymentItem = {
   id: number;

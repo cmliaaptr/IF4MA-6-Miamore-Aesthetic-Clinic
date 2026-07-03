@@ -107,8 +107,12 @@ export function createTreatmentOptions(
   availableTreatments: BookingTreatment[] = []
 ) {
   const treatmentMap = new Map<string, BookingTreatment>();
+  const sourceTreatments = [selectedTreatment, ...availableTreatments].filter(
+    (treatment): treatment is BookingTreatment => Boolean(treatment?.name)
+  );
+  const treatments = sourceTreatments;
 
-  [selectedTreatment, ...availableTreatments, ...defaultTreatmentOptions].forEach((treatment) => {
+  treatments.forEach((treatment) => {
     if (!treatment?.name) return;
     const existingTreatment = treatmentMap.get(treatment.name);
     treatmentMap.set(treatment.name, {
@@ -251,7 +255,18 @@ export default function Booking({
           <SelectField label="Waktu Booking" name="bookingTime" value={formData.bookingTime} onChange={onChange} options={timeOptions} placeholder="Pilih waktu" />
         </div>
         <SelectField label="Layanan / Treatment yang dipilih" name="treatment" value={formData.treatment || selectedTreatment?.name || ""} onChange={onChange} options={treatmentOptions} placeholder="Pilih Treatment" />
-        <SelectField label="Dokter / Terapis (Opsional)" name="therapist" value={formData.therapist} onChange={onChange} options={therapistOptions} placeholder="Pilih Dokter / Terapis" />
+        <SelectField
+          label="Dokter / Terapis"
+          name="therapist"
+          value={formData.therapist}
+          onChange={onChange}
+          options={therapistOptions}
+          placeholder={
+            therapistOptions.length > 0
+              ? "Pilih Dokter/Terapis"
+              : "Belum ada Dokter/Terapis yang tersedia"
+          }
+        />
       </FormSection>
 
       <FormSection icon={<MessageCircle size={18} />} title="CATATAN TAMBAHAN">

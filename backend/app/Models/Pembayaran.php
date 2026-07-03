@@ -17,6 +17,10 @@ class Pembayaran extends Model
         'status'
     ];
 
+    protected $casts = [
+        'tanggal_bayar' => 'datetime',
+    ];
+
     public function booking()
     {
         return $this->belongsTo(Booking::class, 'id_booking', 'id_booking');

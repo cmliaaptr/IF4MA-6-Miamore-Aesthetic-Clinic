@@ -78,6 +78,11 @@ class MidtransQrisService
         return $this->serverKey() !== '';
     }
 
+    public function isProduction(): bool
+    {
+        return (bool) config('services.midtrans.is_production');
+    }
+
     public function qrCodeUrl(array $charge): ?string
     {
         $actions = $charge['actions'] ?? [];
@@ -91,16 +96,27 @@ class MidtransQrisService
     {
         $status = strtolower((string) ($payload['transaction_status'] ?? ''));
         $fraudStatus = strtolower((string) ($payload['fraud_status'] ?? 'accept'));
+        $statusCode = (string) ($payload['status_code'] ?? '');
 
         return in_array($status, ['capture', 'settlement'], true)
-            && in_array($fraudStatus, ['accept', ''], true);
+            && in_array($fraudStatus, ['accept', ''], true)
+            && ($statusCode === '' || $statusCode === '200');
     }
 
     public function isFailedStatus(array $payload): bool
     {
         $status = strtolower((string) ($payload['transaction_status'] ?? ''));
 
-        return in_array($status, ['cancel', 'deny', 'expire', 'failure'], true);
+        return in_array($status, [
+            'cancel',
+            'deny',
+            'expire',
+            'failure',
+            'refund',
+            'partial_refund',
+            'chargeback',
+            'partial_chargeback',
+        ], true);
     }
 
     private function client()
@@ -112,7 +128,9 @@ class MidtransQrisService
         return Http::withBasicAuth($this->serverKey(), '')
             ->acceptJson()
             ->asJson()
-            ->timeout(20);
+            ->connectTimeout(8)
+            ->timeout(20)
+            ->retry(2, 500);
     }
 
     private function baseUrl(): string

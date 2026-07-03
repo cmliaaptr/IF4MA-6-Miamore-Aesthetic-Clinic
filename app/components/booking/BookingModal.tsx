@@ -10,7 +10,6 @@ import Booking, {
   createBookingPayload,
   createTreatmentOptions,
   DoctorApiItem,
-  fallbackTherapistOptions,
   getLoggedInCustomer,
   initialBookingForm,
   parseApiText,
@@ -25,6 +24,9 @@ export type { BookingTreatment } from "./Booking";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+
+const SHOW_SANDBOX_PAYMENT_SIMULATOR =
+  process.env.NEXT_PUBLIC_MIDTRANS_SANDBOX_SIMULATOR !== "false";
 
 type BookingModalProps = {
   isOpen: boolean;
@@ -75,7 +77,7 @@ export default function BookingModal({
   );
 
   const therapistOptions = useMemo(() => {
-    return doctorOptions.length > 0 ? doctorOptions : fallbackTherapistOptions;
+    return doctorOptions;
   }, [doctorOptions]);
 
   const displayTreatment = formData.treatment || selectedTreatment?.name || "Facial Treatment";
@@ -160,6 +162,13 @@ export default function BookingModal({
         if (result?.payment?.status_pembayaran === "Lunas") {
           setPaymentCompletedAt(result.payment.paid_at || new Date().toISOString());
           setStep("success");
+          return;
+        }
+
+        if (result?.payment_check_failed) {
+          setError(
+            "Status pembayaran belum bisa dicek ke Midtrans. Pastikan koneksi backend aktif dan notification URL Midtrans mengarah ke endpoint backend yang dapat diakses publik."
+          );
         }
       } catch {
         setError(
@@ -211,6 +220,11 @@ export default function BookingModal({
     if (!nextForm.bookingDate) return setError("Tanggal booking wajib diisi.");
     if (!nextForm.bookingTime) return setError("Waktu booking wajib dipilih.");
     if (!nextForm.treatment) return setError("Treatment wajib dipilih.");
+    if (!nextForm.therapist) {
+      return setError(
+        "Dokter wajib dipilih yang tersedia."
+      );
+    }
 
     setFormData(nextForm);
     setIsSubmitting(true);
@@ -273,16 +287,23 @@ export default function BookingModal({
       });
 
       const result = await response.json().catch(() => null);
+      applyPaymentInfo(result?.payment);
 
       if (!response.ok) {
-        throw new Error(result?.message || "Pembayaran gagal dikonfirmasi.");
+        throw new Error(
+          result?.payment_check_failed
+            ? "Backend belum bisa terhubung ke Midtrans. Jika masih memakai sandbox, uang real memang tidak masuk ke rekening merchant."
+            : result?.message || "Pembayaran gagal dikonfirmasi."
+        );
       }
-
-      applyPaymentInfo(result?.payment);
 
       if (result?.payment?.status_pembayaran === "Lunas") {
         setPaymentCompletedAt(result.payment.paid_at || new Date().toISOString());
         setStep("success");
+      } else if (result?.payment_check_failed) {
+        setError(
+          "Status pembayaran belum bisa dicek ke Midtrans. Pastikan backend dapat mengakses Midtrans dan notification URL sudah benar."
+        );
       } else {
         setError("Pembayaran belum diterima. Silakan scan QRIS dan tunggu verifikasi otomatis.");
       }
@@ -291,6 +312,49 @@ export default function BookingModal({
         paymentError instanceof Error
           ? paymentError.message
           : "Pembayaran gagal dikonfirmasi. Silakan coba lagi."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSimulateSandboxPayment = async () => {
+    setError("");
+
+    if (!bookingId) {
+      setError("Data booking tidak ditemukan. Silakan ulangi booking.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/bookings/${bookingId}/payment/sandbox-success`,
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+      const result = await response.json().catch(() => null);
+      applyPaymentInfo(result?.payment);
+
+      if (!response.ok) {
+        throw new Error(result?.message || "Simulasi pembayaran sandbox gagal.");
+      }
+
+      if (result?.payment?.status_pembayaran === "Lunas") {
+        setPaymentCompletedAt(result.payment.paid_at || new Date().toISOString());
+        setStep("success");
+      }
+    } catch (paymentError) {
+      setError(
+        paymentError instanceof Error
+          ? paymentError.message
+          : "Simulasi pembayaran sandbox gagal."
       );
     } finally {
       setIsSubmitting(false);
@@ -344,6 +408,11 @@ export default function BookingModal({
               isSubmitting={isSubmitting}
               onBackToForm={handleBackToForm}
               onCheckPayment={handleCheckPayment}
+              onSimulateSandboxPayment={
+                SHOW_SANDBOX_PAYMENT_SIMULATOR
+                  ? handleSimulateSandboxPayment
+                  : undefined
+              }
             />
           )}
 

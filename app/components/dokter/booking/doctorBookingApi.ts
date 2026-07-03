@@ -58,11 +58,12 @@ export function getLoggedInDoctorName() {
 }
 
 export async function fetchDoctorBookings(doctorName: string) {
-  const url = new URL(`${API_BASE_URL}/api/bookings/doctor`);
-
-  if (doctorName) {
-    url.searchParams.set("doctor_name", doctorName);
+  if (!doctorName) {
+    throw new Error("Silakan login sebagai dokter untuk melihat booking pasien.");
   }
+
+  const url = new URL(`${API_BASE_URL}/api/bookings/doctor`);
+  url.searchParams.set("doctor_name", doctorName);
 
   const response = await fetch(url.toString(), {
     headers: {

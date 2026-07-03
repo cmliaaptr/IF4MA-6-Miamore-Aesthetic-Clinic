@@ -6,14 +6,13 @@ import BookingModal from "../booking/BookingModal";
 import TreatmentCard from "./TreatmentCard";
 import {
   createTreatmentCategories,
-  fallbackTreatments,
   fetchUserTreatments,
   UserTreatment,
 } from "./treatmentData";
 
 export default function TreatmentSection() {
   const searchParams = useSearchParams();
-  const [treatments, setTreatments] = useState<UserTreatment[]>(fallbackTreatments);
+  const [treatments, setTreatments] = useState<UserTreatment[]>([]);
   const [selectedTreatment, setSelectedTreatment] = useState<UserTreatment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -26,7 +25,7 @@ export default function TreatmentSection() {
       try {
         setTreatments(await fetchUserTreatments());
       } catch (error) {
-        setTreatments(fallbackTreatments);
+        setTreatments([]);
         setMessage(
           error instanceof Error
             ? error.message
@@ -90,6 +89,12 @@ export default function TreatmentSection() {
         ) : null}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {!isLoading && !message && filteredTreatments.length === 0 ? (
+            <p className="col-span-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-600">
+              Belum ada treatment yang ditambahkan admin.
+            </p>
+          ) : null}
+
           {filteredTreatments.map((item) => (
             <TreatmentCard
               key={item.id}

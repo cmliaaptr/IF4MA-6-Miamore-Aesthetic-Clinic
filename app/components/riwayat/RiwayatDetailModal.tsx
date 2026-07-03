@@ -47,6 +47,10 @@ export default function RiwayatDetailModal({
 
         <dl className="grid gap-3 rounded-xl bg-gray-50 p-4 text-sm sm:grid-cols-2">
           <div>
+            <dt className="font-bold text-black">Treatment</dt>
+            <dd className="text-gray-700">{item.treatment}</dd>
+          </div>
+          <div>
             <dt className="font-bold text-black">Dokter / Terapis</dt>
             <dd className="text-gray-700">{item.doctor}</dd>
           </div>
@@ -58,7 +62,25 @@ export default function RiwayatDetailModal({
             <dt className="font-bold text-black">Pembayaran</dt>
             <dd className="text-gray-700">{item.payment}</dd>
           </div>
+          {item.treatmentPrice ? (
+            <div>
+              <dt className="font-bold text-black">Harga Treatment</dt>
+              <dd className="text-gray-700">{item.treatmentPrice}</dd>
+            </div>
+          ) : null}
+          {item.treatmentDuration ? (
+            <div>
+              <dt className="font-bold text-black">Durasi</dt>
+              <dd className="text-gray-700">{item.treatmentDuration}</dd>
+            </div>
+          ) : null}
         </dl>
+
+        {item.treatmentDescription ? (
+          <p className="mt-4 rounded-xl border border-gray-200 px-4 py-3 text-sm leading-6 text-gray-700">
+            {item.treatmentDescription}
+          </p>
+        ) : null}
 
         <div className="mt-5">
           <h3 className="text-lg font-bold text-black">{item.detailTitle}</h3>

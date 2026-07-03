@@ -22,6 +22,12 @@ export default function BookingPageTable({ data }: BookingPageTableProps) {
         </thead>
 
         <tbody>
+          {data.length === 0 ? (
+            <tr>
+              <td colSpan={6}>Belum ada data booking.</td>
+            </tr>
+          ) : null}
+
           {data.map((item, index) => (
             <tr key={item.id}>
               <td>{index + 1}</td>
@@ -29,7 +35,15 @@ export default function BookingPageTable({ data }: BookingPageTableProps) {
               <td>{item.treatment}</td>
               <td>{item.date}</td>
               <td>{item.time}</td>
-              <td>{item.status}</td>
+              <td>
+                <span
+                  className={`status-badge ${item.status
+                    .toLowerCase()
+                    .replace(/\s+/g, "-")}`}
+                >
+                  {item.status}
+                </span>
+              </td>
             </tr>
           ))}
         </tbody>

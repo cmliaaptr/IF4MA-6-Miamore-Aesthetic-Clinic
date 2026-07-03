@@ -4,6 +4,9 @@ export type RiwayatItem = {
   id: number;
   treatment: string;
   treatmentImage?: string | null;
+  treatmentDescription?: string | null;
+  treatmentPrice?: string | null;
+  treatmentDuration?: string | null;
   schedule: string;
   doctor: string;
   status: RiwayatStatus;

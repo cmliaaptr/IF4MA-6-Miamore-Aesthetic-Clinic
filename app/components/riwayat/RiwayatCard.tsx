@@ -9,6 +9,8 @@ type RiwayatCardProps = {
 };
 
 export default function RiwayatCard({ item, onDetail }: RiwayatCardProps) {
+  const treatmentName = item.treatment || "Treatment Miamore";
+
   const handleImageError = (event: SyntheticEvent<HTMLImageElement>) => {
     const imageElement = event.currentTarget;
 
@@ -23,7 +25,7 @@ export default function RiwayatCard({ item, onDetail }: RiwayatCardProps) {
         <div className="relative h-[130px] w-[130px] overflow-hidden rounded-full bg-gray-200 sm:h-[150px] sm:w-[150px]">
           <Image
             src={item.treatmentImage || "/images/treatment.jpg"}
-            alt={item.treatment}
+            alt={treatmentName}
             fill
             sizes="150px"
             unoptimized
@@ -36,7 +38,7 @@ export default function RiwayatCard({ item, onDetail }: RiwayatCardProps) {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h2 className="text-2xl font-bold leading-tight text-black">
-                {item.treatment}
+                {treatmentName}
               </h2>
               <p className="text-sm font-medium text-black">{item.schedule}</p>
             </div>
