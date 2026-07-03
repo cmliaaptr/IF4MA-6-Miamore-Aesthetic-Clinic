@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CircleAlert, Plus } from "lucide-react";
+import Modal from "../Modal";
 import SuccessModal from "../SuccessModal";
 import AdminTreatmentAssetDetail from "./AdminTreatmentAssetDetail";
 import AdminTreatmentAssetFormModal from "./AdminTreatmentAssetFormModal";
@@ -9,29 +10,42 @@ import AdminTreatmentAssetStats from "./AdminTreatmentAssetStats";
 import AdminTreatmentAssetTable from "./AdminTreatmentAssetTable";
 import AdminTreatmentAssetToolbar from "./AdminTreatmentAssetToolbar";
 import {
-  adminTreatmentAssets,
-  adminTreatmentCategories,
-} from "./adminTreatmentAssets";
+  API_BASE_URL,
+  createTreatmentAssetPayload,
+  createTreatmentAssetStepsPayload,
+  fetchTreatmentAssetItems,
+  getTreatmentAssetId,
+  mapApiTreatmentToAdminAsset,
+} from "../../dokter/aset-treatment/treatmentAssetApi";
+import AdminTreatmentStepModal from "./AdminTreatmentStepModal";
 import type {
   AdminTreatmentAsset,
   AdminTreatmentAssetFormData,
+  AdminTreatmentStep,
 } from "./AdminTreatmentAssetTypes";
 
 const rowsPerPage = 8;
 
 export default function AdminTreatmentAssetPage() {
   const [treatments, setTreatments] =
-    useState<AdminTreatmentAsset[]>(adminTreatmentAssets);
+    useState<AdminTreatmentAsset[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Semua Kategori");
-  const [selectedTreatmentId, setSelectedTreatmentId] = useState(treatments[0]?.id ?? 0);
+  const [selectedTreatmentId, setSelectedTreatmentId] = useState(0);
   const [activeTab, setActiveTab] = useState("Detail Treatment");
   const [page, setPage] = useState(1);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isStepModalOpen, setIsStepModalOpen] = useState(false);
   const [editingTreatment, setEditingTreatment] = useState<AdminTreatmentAsset | null>(null);
+  const [stepTreatment, setStepTreatment] = useState<AdminTreatmentAsset | null>(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [deleteConfirmStep, setDeleteConfirmStep] = useState<0 | 1 | 2>(0);
+  const [deletingTreatment, setDeletingTreatment] =
+    useState<AdminTreatmentAsset | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const filteredTreatments = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -61,11 +75,48 @@ export default function AdminTreatmentAssetPage() {
     treatments.find((treatment) => treatment.id === selectedTreatmentId) ??
     filteredTreatments[0] ??
     treatments[0];
+  const categories = useMemo(
+    () => [
+      "Semua Kategori",
+      ...Array.from(new Set(treatments.map((treatment) => treatment.category))),
+    ],
+    [treatments],
+  );
 
   const showSuccess = (message: string) => {
     setSuccessMessage(message);
     setIsSuccessOpen(true);
   };
+
+  const loadTreatments = useCallback(async (preferredId?: number | null) => {
+    setErrorMessage("");
+
+    try {
+      const items = await fetchTreatmentAssetItems();
+      const nextTreatments = items.map(mapApiTreatmentToAdminAsset);
+
+      setTreatments(nextTreatments);
+      setSelectedTreatmentId((current) => {
+        if (preferredId !== undefined) {
+          return nextTreatments.find((treatment) => treatment.id === preferredId)
+            ? preferredId ?? 0
+            : nextTreatments[0]?.id || 0;
+        }
+
+        return nextTreatments.find((treatment) => treatment.id === current)
+          ? current
+          : nextTreatments[0]?.id || 0;
+      });
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Gagal mengambil data aset treatment.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   const handleOpenAdd = () => {
     setModalMode("add");
@@ -79,39 +130,54 @@ export default function AdminTreatmentAssetPage() {
     setIsFormOpen(true);
   };
 
-  const handleSubmit = (data: AdminTreatmentAssetFormData) => {
+  const handleOpenStepModal = (treatment: AdminTreatmentAsset) => {
+    setStepTreatment(treatment);
+    setIsStepModalOpen(true);
+  };
+
+  const handleSubmit = async (data: AdminTreatmentAssetFormData) => {
+    setErrorMessage("");
+
     if (modalMode === "edit" && editingTreatment) {
-      setTreatments((current) =>
-        current.map((treatment) =>
-          treatment.id === editingTreatment.id
-            ? {
-                ...treatment,
-                ...data,
-                updatedAt: "Hari ini, 09:00",
-              }
-            : treatment,
-        ),
+      const response = await fetch(
+        `${API_BASE_URL}/api/treatment-assets/${editingTreatment.id}`,
+        {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(createTreatmentAssetPayload(data)),
+        },
       );
+
+      if (!response.ok) {
+        setErrorMessage("Gagal memperbarui aset treatment.");
+        return;
+      }
+
+      await loadTreatments();
+      setSelectedTreatmentId(editingTreatment.id);
       showSuccess("Aset treatment berhasil diperbarui.");
     } else {
-      const nextId = Math.max(...treatments.map((treatment) => treatment.id)) + 1;
-      const newTreatment: AdminTreatmentAsset = {
-        id: nextId,
-        slug: data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        name: data.name,
-        category: data.category,
-        duration: data.duration,
-        image: data.image || "/images/brightening.jpg",
-        description: data.description,
-        status: data.status,
-        createdAt: "Hari ini, 09:00",
-        updatedAt: "Hari ini, 09:00",
-        steps: [],
-        products: [],
-        homeCare: [],
-      };
+      const response = await fetch(`${API_BASE_URL}/api/treatment-assets`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(createTreatmentAssetPayload(data)),
+      });
 
-      setTreatments((current) => [newTreatment, ...current]);
+      if (!response.ok) {
+        setErrorMessage("Gagal menambah aset treatment.");
+        return;
+      }
+
+      const result = await response.json();
+      const nextId = getTreatmentAssetId(result.data);
+
+      await loadTreatments();
       setSelectedTreatmentId(nextId);
       setPage(1);
       showSuccess("Aset treatment baru berhasil ditambahkan.");
@@ -121,21 +187,72 @@ export default function AdminTreatmentAssetPage() {
     setEditingTreatment(null);
   };
 
-  const handleToggleStatus = (treatment: AdminTreatmentAsset) => {
-    const nextStatus = treatment.status === "Aktif" ? "Nonaktif" : "Aktif";
+  const handleSubmitSteps = async (steps: AdminTreatmentStep[]) => {
+    if (!stepTreatment) return;
 
-    setTreatments((current) =>
-      current.map((item) =>
-        item.id === treatment.id
-          ? {
-              ...item,
-              status: nextStatus,
-              updatedAt: "Hari ini, 09:00",
-            }
-          : item,
-      ),
+    setErrorMessage("");
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/treatment-assets/${stepTreatment.id}/steps`,
+      {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(createTreatmentAssetStepsPayload(steps)),
+      },
     );
-    showSuccess(`${treatment.name} berhasil dibuat ${nextStatus.toLowerCase()}.`);
+
+    if (!response.ok) {
+      setErrorMessage("Gagal menyimpan langkah dan takaran aset treatment.");
+      return;
+    }
+
+    await loadTreatments(stepTreatment.id);
+    setIsStepModalOpen(false);
+    setStepTreatment(null);
+    setActiveTab("Langkah & Takaran");
+    showSuccess("Langkah dan takaran aset treatment berhasil diperbarui.");
+  };
+
+  const handleOpenDelete = (treatment: AdminTreatmentAsset) => {
+    setDeletingTreatment(treatment);
+    setDeleteConfirmStep(1);
+  };
+
+  const handleCloseDelete = () => {
+    setDeleteConfirmStep(0);
+    setDeletingTreatment(null);
+  };
+
+  const handleFirstDeleteConfirm = () => {
+    setDeleteConfirmStep(2);
+  };
+
+  const handleDeleteTreatment = async () => {
+    if (!deletingTreatment) return;
+
+    setErrorMessage("");
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/treatment-assets/${deletingTreatment.id}`,
+      {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      setErrorMessage("Gagal menghapus aset treatment.");
+      return;
+    }
+
+    await loadTreatments(null);
+    handleCloseDelete();
+    showSuccess("Aset treatment berhasil dihapus.");
   };
 
   const handleSearchChange = (value: string) => {
@@ -147,6 +264,12 @@ export default function AdminTreatmentAssetPage() {
     setSelectedCategory(value);
     setPage(1);
   };
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    loadTreatments();
+  }, [loadTreatments]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   return (
     <section className="asset-treatment-page">
@@ -165,33 +288,41 @@ export default function AdminTreatmentAssetPage() {
         </button>
       </div>
 
+      {errorMessage ? <p className="mt-4 text-sm font-semibold text-red-600">{errorMessage}</p> : null}
+
       <AdminTreatmentAssetStats treatments={treatments} />
 
       <div className="asset-list-header">
         <AdminTreatmentAssetToolbar
           searchQuery={searchQuery}
           selectedCategory={selectedCategory}
-          categories={adminTreatmentCategories}
+          categories={categories}
           onSearchChange={handleSearchChange}
           onCategoryChange={handleCategoryChange}
         />
       </div>
 
-      <AdminTreatmentAssetTable
-        treatments={paginatedTreatments}
-        selectedTreatmentId={selectedTreatment?.id ?? 0}
-        page={currentPage}
-        pageCount={pageCount}
-        totalCount={filteredTreatments.length}
-        startIndex={startIndex}
-        onSelect={(treatment) => {
-          setSelectedTreatmentId(treatment.id);
-          setActiveTab("Detail Treatment");
-        }}
-        onEdit={handleOpenEdit}
-        onToggleStatus={handleToggleStatus}
-        onPageChange={setPage}
-      />
+      {isLoading ? (
+        <div className="asset-table-section p-6 text-sm font-semibold text-slate-600">
+          Memuat data aset treatment...
+        </div>
+      ) : (
+        <AdminTreatmentAssetTable
+          treatments={paginatedTreatments}
+          selectedTreatmentId={selectedTreatment?.id ?? 0}
+          page={currentPage}
+          pageCount={pageCount}
+          totalCount={filteredTreatments.length}
+          startIndex={startIndex}
+          onSelect={(treatment) => {
+            setSelectedTreatmentId(treatment.id);
+            setActiveTab("Detail Treatment");
+          }}
+          onEdit={handleOpenEdit}
+          onDelete={handleOpenDelete}
+          onPageChange={setPage}
+        />
+      )}
 
       {selectedTreatment && (
         <AdminTreatmentAssetDetail
@@ -199,7 +330,8 @@ export default function AdminTreatmentAssetPage() {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           onEdit={handleOpenEdit}
-          onToggleStatus={handleToggleStatus}
+          onDelete={handleOpenDelete}
+          onManageSteps={handleOpenStepModal}
         />
       )}
 
@@ -216,6 +348,83 @@ export default function AdminTreatmentAssetPage() {
         onClose={() => setIsSuccessOpen(false)}
         message={successMessage}
       />
+
+      <AdminTreatmentStepModal
+        isOpen={isStepModalOpen}
+        treatment={stepTreatment}
+        onClose={() => {
+          setIsStepModalOpen(false);
+          setStepTreatment(null);
+        }}
+        onSubmit={handleSubmitSteps}
+      />
+
+      <DeleteTreatmentAssetModal
+        isOpen={deleteConfirmStep > 0}
+        treatmentName={deletingTreatment?.name}
+        step={deleteConfirmStep}
+        onClose={handleCloseDelete}
+        onFirstConfirm={handleFirstDeleteConfirm}
+        onFinalConfirm={handleDeleteTreatment}
+      />
     </section>
+  );
+}
+
+type DeleteTreatmentAssetModalProps = {
+  isOpen: boolean;
+  treatmentName?: string;
+  step: 0 | 1 | 2;
+  onClose: () => void;
+  onFirstConfirm: () => void;
+  onFinalConfirm: () => void;
+};
+
+function DeleteTreatmentAssetModal({
+  isOpen,
+  treatmentName,
+  step,
+  onClose,
+  onFirstConfirm,
+  onFinalConfirm,
+}: DeleteTreatmentAssetModalProps) {
+  const isFinalStep = step === 2;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} width="520px" showCloseButton={false}>
+      <div className="delete-modal-content">
+        <div className="delete-icon-wrapper">
+          <CircleAlert size={70} />
+        </div>
+
+        <h3 className="delete-modal-title">
+          {isFinalStep
+            ? "Konfirmasi Hapus Aset Treatment"
+            : "Apakah kamu benar-benar ingin menghapus aset treatment ini?"}
+        </h3>
+
+        {treatmentName ? (
+          <p className="text-center text-sm font-semibold text-slate-600">
+            {isFinalStep
+              ? `Klik Ya sekali lagi untuk menghapus ${treatmentName} secara permanen.`
+              : treatmentName}
+          </p>
+        ) : null}
+
+        <div className="delete-modal-actions">
+          <button
+            type="button"
+            className="delete-yes-button"
+            onClick={isFinalStep ? onFinalConfirm : onFirstConfirm}
+          >
+            Ya
+          </button>
+
+          <button type="button" className="delete-cancel-button" onClick={onClose}>
+            Batal
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }

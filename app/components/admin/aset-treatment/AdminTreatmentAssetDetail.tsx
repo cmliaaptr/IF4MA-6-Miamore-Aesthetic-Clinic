@@ -15,7 +15,8 @@ type AdminTreatmentAssetDetailProps = {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onEdit: (treatment: AdminTreatmentAsset) => void;
-  onToggleStatus: (treatment: AdminTreatmentAsset) => void;
+  onDelete: (treatment: AdminTreatmentAsset) => void;
+  onManageSteps: (treatment: AdminTreatmentAsset) => void;
 };
 
 const tabs = [
@@ -31,7 +32,8 @@ export default function AdminTreatmentAssetDetail({
   activeTab,
   onTabChange,
   onEdit,
-  onToggleStatus,
+  onDelete,
+  onManageSteps,
 }: AdminTreatmentAssetDetailProps) {
   return (
     <section className="asset-detail-panel">
@@ -77,8 +79,8 @@ export default function AdminTreatmentAssetDetail({
               <Pencil size={16} />
               Edit Treatment
             </button>
-            <button type="button" className="asset-danger-outline" onClick={() => onToggleStatus(treatment)}>
-              {treatment.status === "Aktif" ? "Nonaktifkan" : "Aktifkan"}
+            <button type="button" className="asset-danger-outline" onClick={() => onDelete(treatment)}>
+              Hapus Treatment
             </button>
           </div>
         </article>
@@ -110,7 +112,7 @@ export default function AdminTreatmentAssetDetail({
                 </tbody>
               </table>
             </div>
-            <button type="button" className="asset-secondary-button" onClick={() => onTabChange("Langkah & Takaran")}>
+            <button type="button" className="asset-secondary-button" onClick={() => onManageSteps(treatment)}>
               <Settings size={16} />
               Kelola Langkah & Takaran
             </button>

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Eye, MoreVertical, Pencil } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, Pencil, Trash2 } from "lucide-react";
 import type { AdminTreatmentAsset } from "./AdminTreatmentAssetTypes";
 
 type AdminTreatmentAssetTableProps = {
@@ -11,7 +11,7 @@ type AdminTreatmentAssetTableProps = {
   startIndex: number;
   onSelect: (treatment: AdminTreatmentAsset) => void;
   onEdit: (treatment: AdminTreatmentAsset) => void;
-  onToggleStatus: (treatment: AdminTreatmentAsset) => void;
+  onDelete: (treatment: AdminTreatmentAsset) => void;
   onPageChange: (page: number) => void;
 };
 
@@ -24,7 +24,7 @@ export default function AdminTreatmentAssetTable({
   startIndex,
   onSelect,
   onEdit,
-  onToggleStatus,
+  onDelete,
   onPageChange,
 }: AdminTreatmentAssetTableProps) {
   return (
@@ -101,10 +101,10 @@ export default function AdminTreatmentAssetTable({
                     </button>
                     <button
                       type="button"
-                      aria-label={`${treatment.status === "Aktif" ? "Nonaktifkan" : "Aktifkan"} ${treatment.name}`}
-                      onClick={() => onToggleStatus(treatment)}
+                      aria-label={`Hapus ${treatment.name}`}
+                      onClick={() => onDelete(treatment)}
                     >
-                      <MoreVertical size={16} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </td>

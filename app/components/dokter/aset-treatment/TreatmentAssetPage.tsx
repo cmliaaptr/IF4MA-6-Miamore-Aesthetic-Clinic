@@ -1,24 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pencil } from "lucide-react";
 import TreatmentAssetCard from "./TreatmentAssetCard";
 import TreatmentAssetToolbar from "./TreatmentAssetToolbar";
 import {
-  treatmentAssetCategories,
   treatmentAssets,
 } from "./treatmentAssets";
+import {
+  fetchTreatmentAssetItems,
+  mapApiTreatmentToDoctorAsset,
+} from "./treatmentAssetApi";
 
 export default function TreatmentAssetPage() {
+  const [assets, setAssets] = useState(treatmentAssets);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Semua Kategori");
   const [sortOrder, setSortOrder] = useState("az");
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const filteredAssets = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
-    return treatmentAssets
+    return assets
       .filter((asset) => {
         const matchesSearch =
           !normalizedQuery ||
@@ -42,7 +48,34 @@ export default function TreatmentAssetPage() {
 
         return a.name.localeCompare(b.name);
       });
-  }, [searchQuery, selectedCategory, sortOrder]);
+  }, [assets, searchQuery, selectedCategory, sortOrder]);
+  const categories = useMemo(
+    () => [
+      "Semua Kategori",
+      ...Array.from(new Set(assets.map((asset) => asset.category))),
+    ],
+    [assets],
+  );
+
+  useEffect(() => {
+    async function loadTreatmentAssets() {
+      try {
+        const items = await fetchTreatmentAssetItems();
+        const nextAssets = items
+          .filter((item) => item.status !== "Nonaktif")
+          .map(mapApiTreatmentToDoctorAsset);
+
+        setAssets(nextAssets);
+        setErrorMessage("");
+      } catch {
+        setErrorMessage("Data aset treatment backend belum dapat dimuat.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadTreatmentAssets();
+  }, []);
 
   return (
     <section className="mx-auto max-w-7xl">
@@ -70,7 +103,7 @@ export default function TreatmentAssetPage() {
         <TreatmentAssetToolbar
           searchQuery={searchQuery}
           selectedCategory={selectedCategory}
-          categories={treatmentAssetCategories}
+          categories={categories}
           sortOrder={sortOrder}
           onSearchChange={setSearchQuery}
           onCategoryChange={setSelectedCategory}
@@ -83,6 +116,16 @@ export default function TreatmentAssetPage() {
           <TreatmentAssetCard key={asset.slug} asset={asset} />
         ))}
       </div>
+
+      {isLoading ? (
+        <div className="mt-6 rounded-lg border border-violet-100 bg-white p-6 text-sm font-semibold text-slate-600">
+          Memuat aset treatment...
+        </div>
+      ) : null}
+
+      {errorMessage ? (
+        <p className="mt-4 text-sm font-semibold text-amber-700">{errorMessage}</p>
+      ) : null}
 
       {filteredAssets.length === 0 ? (
         <div className="mt-6 rounded-lg border border-dashed border-violet-200 bg-white p-8 text-center">

@@ -4,6 +4,7 @@ export type AdminTreatmentStep = {
   product: string;
   dosage: string;
   duration: string;
+  usage: string;
 };
 
 export type AdminTreatmentProduct = {

@@ -1378,6 +1378,57 @@
   background: #ffffff;
 }
 
+.asset-step-editor {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #e9ebf1;
+  border-radius: 10px;
+  background: #fbfbfd;
+}
+
+.asset-step-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.asset-step-editor-header h3 {
+  font-size: 16px;
+  font-weight: 800;
+  color: #253047;
+}
+
+.asset-step-editor-header button {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #ef4444;
+  cursor: pointer;
+}
+
+.asset-step-editor-header button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.asset-step-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.asset-step-modal-actions .asset-secondary-button {
+  margin: 0;
+}
+
 .payment-page {
   width: 100%;
 }

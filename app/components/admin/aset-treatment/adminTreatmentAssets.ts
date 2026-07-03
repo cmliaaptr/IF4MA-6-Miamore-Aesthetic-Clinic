@@ -44,6 +44,7 @@ export const adminTreatmentAssets: AdminTreatmentAsset[] = treatmentAssets.map(
         product: step.product,
         dosage: step.dosage,
         duration: stepIndex === 3 ? "15 Menit" : stepIndex === 1 ? "7 Menit" : "5 Menit",
+        usage: step.usage,
       })),
       products,
       homeCare: products.slice(0, 3).map((product) => product.name),
