@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
+import toast from "react-hot-toast";
 import TreatmentTable from "../../components/admin/TreatmentTable";
 import TreatmentFormModal from "../../components/admin/TreatmentFormModal";
 import DeleteConfirmModal from "../../components/admin/DeleteConfirmModal";
@@ -25,6 +26,7 @@ type TreatmentApiItem = {
   harga: string;
   diskon: string;
   durasi: string;
+  updated_at?: string;
 };
 
 export default function TreatmentPage() {
@@ -56,7 +58,7 @@ export default function TreatmentPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Gagal menambah treatment");
+        throw new Error(await getApiErrorMessage(response, "Gagal menambah treatment"));
       }
 
       await fetchTreatments();
@@ -66,6 +68,7 @@ export default function TreatmentPage() {
       setIsSuccessOpen(true);
     } catch (error) {
       console.log(error);
+      toast.error(error instanceof Error ? error.message : "Gagal menambah treatment");
     }
   };
 
@@ -96,7 +99,7 @@ export default function TreatmentPage() {
       );
 
       if (!response.ok) {
-        throw new Error("Gagal mengubah treatment");
+        throw new Error(await getApiErrorMessage(response, "Gagal mengubah treatment"));
       }
 
       await fetchTreatments();
@@ -107,6 +110,7 @@ export default function TreatmentPage() {
       setIsSuccessOpen(true);
     } catch (error) {
       console.log(error);
+      toast.error(error instanceof Error ? error.message : "Gagal mengubah treatment");
     }
   };
 
@@ -127,7 +131,7 @@ export default function TreatmentPage() {
       );
 
       if (!response.ok) {
-        throw new Error("Gagal menghapus treatment");
+        throw new Error(await getApiErrorMessage(response, "Gagal menghapus treatment"));
       }
 
       await fetchTreatments();
@@ -138,12 +142,18 @@ export default function TreatmentPage() {
       setIsSuccessOpen(true);
     } catch (error) {
       console.log(error);
+      toast.error(error instanceof Error ? error.message : "Gagal menghapus treatment");
     }
   };
 
   const fetchTreatments = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/treatments");
+      const response = await fetch("http://127.0.0.1:8000/api/treatments", {
+        cache: "no-store",
+        headers: {
+          Accept: "application/json",
+        },
+      });
 
       const text = await response.text();
       console.log("RAW:", text);
@@ -160,6 +170,7 @@ export default function TreatmentPage() {
           price: item.harga,
           discount: item.diskon,
           duration: item.durasi,
+          updatedAt: item.updated_at,
         })),
       );
     } catch (error) {
@@ -258,4 +269,13 @@ function normalizePrice(price: string) {
   }
 
   return cleanedPrice.replace(/\./g, "");
+}
+
+async function getApiErrorMessage(response: Response, fallbackMessage: string) {
+  const result = await response.json().catch(() => null);
+  const errors = result?.errors
+    ? Object.values(result.errors).flat().join(" ")
+    : "";
+
+  return errors || result?.message || fallbackMessage;
 }

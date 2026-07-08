@@ -81,7 +81,8 @@ export default function BookingModal({
   }, [doctorOptions]);
 
   const displayTreatment = formData.treatment || selectedTreatment?.name || "Facial Treatment";
-  const displayTherapist = formData.therapist || "-";
+  const displayTherapist =
+    doctorOptions.find((doctor) => doctor.value === formData.therapist)?.label || "-";
 
   const applyPaymentInfo = useCallback((payment?: PaymentInfo | null) => {
     if (!payment) return;
@@ -119,7 +120,7 @@ export default function BookingModal({
               .filter((doctor) => doctor.role === "dokter" && doctor.username)
               .map((doctor) => ({
                 label: doctor.username,
-                value: doctor.username,
+                value: String(doctor.id_user),
               }))
           )
         );
@@ -220,7 +221,7 @@ export default function BookingModal({
     if (!nextForm.bookingDate) return setError("Tanggal booking wajib diisi.");
     if (!nextForm.bookingTime) return setError("Waktu booking wajib dipilih.");
     if (!nextForm.treatment) return setError("Treatment wajib dipilih.");
-    if (!nextForm.therapist) {
+    if (!nextForm.therapist || !Number.isFinite(Number(nextForm.therapist))) {
       return setError(
         "Dokter wajib dipilih yang tersedia."
       );

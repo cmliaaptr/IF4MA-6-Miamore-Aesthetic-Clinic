@@ -72,8 +72,6 @@ class TreatmentController extends Controller
             'kategori' => 'required|string|max:100',
             'deskripsi' => 'nullable|string',
             'foto' => 'nullable|string|max:2048',
-            'harga' => 'nullable|numeric',
-            'diskon' => 'nullable|numeric',
             'durasi' => 'required|string|max:100',
             'status' => 'required|in:Aktif,Nonaktif',
         ]);
@@ -148,7 +146,7 @@ class TreatmentController extends Controller
 
         return response()->json([
             'message' => 'Treatment berhasil diupdate',
-            'data' => $treatment
+            'data' => $treatment->fresh()
         ]);
     }
 
@@ -302,7 +300,12 @@ class TreatmentController extends Controller
         }
 
         $path = $request->file('foto')->store('treatments', 'public');
+        $url = Storage::disk('public')->url($path);
 
-        return $request->getSchemeAndHttpHost() . Storage::disk('public')->url($path);
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            return $url;
+        }
+
+        return $request->getSchemeAndHttpHost() . $url;
     }
 }

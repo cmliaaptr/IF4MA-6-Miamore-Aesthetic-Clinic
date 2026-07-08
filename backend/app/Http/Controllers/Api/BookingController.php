@@ -23,13 +23,19 @@ class BookingController extends Controller
     {
         return response()->json([
             'message' => 'Data booking berhasil diambil',
-            'data' => Booking::with('pelanggan:id_user,username,email,role')->latest()->get(),
+            'data' => Booking::with([
+                'pelanggan:id_user,username,email,role',
+                'dokter:id_user,username,email,role',
+            ])->latest()->get(),
         ]);
     }
 
     public function adminDashboard()
     {
-        $bookings = Booking::with('pelanggan:id_user,username,email,role')
+        $bookings = Booking::with([
+                'pelanggan:id_user,username,email,role',
+                'dokter:id_user,username,email,role',
+            ])
             ->latest()
             ->get();
         $today = now()->toDateString();
@@ -54,10 +60,23 @@ class BookingController extends Controller
 
     public function doctorIndex(Request $request)
     {
+        $doctorId = $request->query('id_dokter');
         $doctorName = $request->query('doctor_name');
 
-        $bookings = Booking::with('pelanggan:id_user,username,email,role')
-            ->when($doctorName, function ($query) use ($doctorName) {
+        $bookings = Booking::with([
+                'pelanggan:id_user,username,email,role',
+                'dokter:id_user,username,email,role',
+            ])
+            ->when($doctorId && $doctorName, function ($query) use ($doctorId, $doctorName) {
+                $query->where(function ($query) use ($doctorId, $doctorName) {
+                    $query->where('id_dokter', $doctorId)
+                        ->orWhere('dokter_terapis', $doctorName);
+                });
+            })
+            ->when($doctorId && !$doctorName, function ($query) use ($doctorId) {
+                $query->where('id_dokter', $doctorId);
+            })
+            ->when(!$doctorId && $doctorName, function ($query) use ($doctorName) {
                 $query->where('dokter_terapis', $doctorName);
             })
             ->orderBy('tanggal_booking')
@@ -86,6 +105,13 @@ class BookingController extends Controller
     {
         $validated = $request->validate([
             'id_user' => 'required|exists:users,id_user',
+            'id_dokter' => [
+                'nullable',
+                'required_without:dokter_terapis',
+                'integer',
+                Rule::exists('users', 'id_user')
+                    ->where(fn ($query) => $query->where('role', 'dokter')),
+            ],
             'nama_lengkap' => 'required|string|max:255',
             'tanggal_lahir' => 'required|date',
             'jenis_kelamin' => 'required|string|max:20',
@@ -94,9 +120,15 @@ class BookingController extends Controller
             'alamat' => 'required|string',
             'tanggal_booking' => 'required|date|after_or_equal:today',
             'waktu_booking' => 'required|date_format:H:i',
-            'treatment' => 'required|string|max:255',
-            'dokter_terapis' => [
+            'treatment' => [
                 'required',
+                'string',
+                'max:255',
+                Rule::exists('treatments', 'nama_treatment'),
+            ],
+            'dokter_terapis' => [
+                'nullable',
+                'required_without:id_dokter',
                 'string',
                 'max:255',
                 Rule::exists('users', 'username')
@@ -117,14 +149,33 @@ class BookingController extends Controller
             ], 422);
         }
 
+        $dokter = User::where('role', 'dokter')
+            ->when(
+                !empty($validated['id_dokter']),
+                fn ($query) => $query->where('id_user', $validated['id_dokter']),
+                fn ($query) => $query->where('username', $validated['dokter_terapis'])
+            )
+            ->first();
+
+        if (!$dokter) {
+            return response()->json([
+                'message' => 'User dokter tidak ditemukan',
+            ], 422);
+        }
+
         $booking = Booking::create([
             ...$validated,
+            'id_dokter' => $dokter->id_user,
+            'dokter_terapis' => $dokter->username,
             'order_id' => $this->generateOrderId(),
             'status_booking' => 'Booking',
             'status_pembayaran' => 'Belum Dibayar',
             'metode_pembayaran' => 'QRIS',
             'payment_expires_at' => now()->addMinutes(15),
-        ])->load('pelanggan:id_user,username,email,role');
+        ])->load([
+            'pelanggan:id_user,username,email,role',
+            'dokter:id_user,username,email,role',
+        ]);
 
         $payment = null;
         $paymentWarning = null;
@@ -145,7 +196,10 @@ class BookingController extends Controller
 
         return response()->json([
             'message' => 'Booking berhasil dibuat',
-            'data' => $booking->fresh('pelanggan:id_user,username,email,role'),
+            'data' => $booking->fresh([
+                'pelanggan:id_user,username,email,role',
+                'dokter:id_user,username,email,role',
+            ]),
             'payment' => $payment,
             'payment_warning' => $paymentWarning,
         ], 201);
@@ -153,7 +207,10 @@ class BookingController extends Controller
 
     public function show($id)
     {
-        $booking = Booking::with('pelanggan:id_user,username,email,role')->find($id);
+        $booking = Booking::with([
+            'pelanggan:id_user,username,email,role',
+            'dokter:id_user,username,email,role',
+        ])->find($id);
 
         if (!$booking) {
             return response()->json([
@@ -196,7 +253,10 @@ class BookingController extends Controller
             'message' => $booking->fresh()->status_pembayaran === 'Lunas'
                 ? 'Pembayaran berhasil dikonfirmasi'
                 : 'Pembayaran masih menunggu verifikasi',
-            'data' => $booking->fresh('pelanggan:id_user,username,email,role'),
+            'data' => $booking->fresh([
+                'pelanggan:id_user,username,email,role',
+                'dokter:id_user,username,email,role',
+            ]),
             'payment' => $this->paymentPayload($booking->fresh()),
         ]);
     }
@@ -232,7 +292,10 @@ class BookingController extends Controller
 
         return response()->json([
             'message' => 'Pembayaran sandbox berhasil disimulasikan',
-            'data' => $booking->fresh('pelanggan:id_user,username,email,role'),
+            'data' => $booking->fresh([
+                'pelanggan:id_user,username,email,role',
+                'dokter:id_user,username,email,role',
+            ]),
             'payment' => $this->paymentPayload($booking->fresh()),
         ]);
     }
@@ -307,10 +370,11 @@ class BookingController extends Controller
             'id' => $booking->id_booking,
             'id_booking' => $booking->id_booking,
             'id_user' => $booking->id_user,
+            'id_dokter' => $booking->id_dokter,
             'name' => $booking->nama_lengkap,
             'customer_username' => optional($booking->pelanggan)->username,
             'treatment' => $booking->treatment,
-            'doctor' => $booking->dokter_terapis,
+            'doctor' => optional($booking->dokter)->username ?? $booking->dokter_terapis,
             'date' => $booking->tanggal_booking
                 ? Carbon::parse($booking->tanggal_booking)->format('d/m/Y')
                 : '-',
@@ -330,10 +394,11 @@ class BookingController extends Controller
             'id' => $booking->id_booking,
             'id_booking' => $booking->id_booking,
             'id_user' => $booking->id_user,
+            'id_dokter' => $booking->id_dokter,
             'fullName' => $booking->nama_lengkap,
             'customerName' => optional($booking->pelanggan)->username,
             'treatment' => $booking->treatment,
-            'doctor' => $booking->dokter_terapis,
+            'doctor' => optional($booking->dokter)->username ?? $booking->dokter_terapis,
             'date' => $booking->tanggal_booking
                 ? Carbon::parse($booking->tanggal_booking)->format('d/m/Y')
                 : '-',

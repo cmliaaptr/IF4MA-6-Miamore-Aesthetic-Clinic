@@ -71,8 +71,9 @@ export default function TreatmentTable({
               </td>
               <td>
                 <Image
-                  src={getTreatmentImageSource(item.photo)}
+                  src={withImageVersion(getTreatmentImageSource(item.photo), item.updatedAt)}
                   alt={item.name}
+                  key={`${item.id}-${item.photo}-${item.updatedAt || ""}`}
                   width={120}
                   height={76}
                   unoptimized
@@ -112,4 +113,12 @@ export default function TreatmentTable({
       </table>
     </div>
   );
+}
+
+function withImageVersion(source: string, version?: string) {
+  if (!version || source === TREATMENT_IMAGE_FALLBACK) return source;
+
+  const separator = source.includes("?") ? "&" : "?";
+
+  return `${source}${separator}v=${encodeURIComponent(version)}`;
 }

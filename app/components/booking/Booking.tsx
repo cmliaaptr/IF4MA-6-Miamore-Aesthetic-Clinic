@@ -22,6 +22,7 @@ export type BookingFormData = {
 
 export type BookingPayload = {
   id_user: number;
+  id_dokter: number;
   nama_lengkap: string;
   tanggal_lahir: string;
   jenis_kelamin: string;
@@ -171,6 +172,7 @@ export function createBookingPayload(
 ): BookingPayload {
   return {
     id_user: customer.id_user,
+    id_dokter: Number(form.therapist),
     nama_lengkap: form.fullName,
     tanggal_lahir: form.birthDate,
     jenis_kelamin: form.gender,
@@ -180,7 +182,6 @@ export function createBookingPayload(
     tanggal_booking: form.bookingDate,
     waktu_booking: form.bookingTime,
     treatment: form.treatment,
-    dokter_terapis: form.therapist || undefined,
     catatan: form.notes || undefined,
     total_pembayaran: totalPayment,
     metode_pembayaran: "QRIS",

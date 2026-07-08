@@ -1,9 +1,11 @@
 "use client";
 
 import { ChangeEvent, useEffect, useState } from "react";
+import Image from "next/image";
 import toast from "react-hot-toast";
 import Modal from "./Modal";
 import type { TreatmentItem } from "@/types/dashboard";
+import { getTreatmentImageSource } from "../treatments/treatmentImage";
 
 type TreatmentFormData = {
   nama_treatment: string;
@@ -40,6 +42,7 @@ export default function TreatmentFormModal({
 }: TreatmentFormModalProps) {
   const [formData, setFormData] =
     useState<TreatmentFormData>(initialFormValue);
+  const [previewUrl, setPreviewUrl] = useState("");
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -52,8 +55,10 @@ export default function TreatmentFormModal({
         fotoFile: null,
         deskripsi: initialData.description,
       });
+      setPreviewUrl(getTreatmentImageSource(initialData.photo));
     } else {
       setFormData(initialFormValue);
+      setPreviewUrl("");
     }
   }, [mode, initialData, isOpen]);
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -77,11 +82,16 @@ export default function TreatmentFormModal({
     const file = e.target.files?.[0];
 
     if (file) {
+      if (previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+
       setFormData((prev) => ({
         ...prev,
         foto: file.name,
         fotoFile: file,
       }));
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
@@ -138,6 +148,7 @@ export default function TreatmentFormModal({
 
   const handleReset = () => {
     setFormData(initialFormValue);
+    setPreviewUrl("");
 
     toast.success(
       "Form berhasil direset"
@@ -226,6 +237,24 @@ export default function TreatmentFormModal({
               {" "}
               {formData.foto}
             </small>
+          )}
+
+          {previewUrl && (
+            <div className="mt-3">
+              <Image
+                src={previewUrl}
+                alt="Preview foto treatment"
+                width={160}
+                height={96}
+                unoptimized
+                className="h-24 w-40 rounded-lg object-cover"
+              />
+              {mode === "edit" && !formData.fotoFile && (
+                <small>
+                  Foto saat ini. Pilih file baru untuk menggantinya.
+                </small>
+              )}
+            </div>
           )}
         </div>
 

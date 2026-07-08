@@ -21,6 +21,7 @@ export type TreatmentItem = {
   price: string;
   discount: string;
   duration: string;
+  updatedAt?: string;
 };
 
 export type CustomerItem = {

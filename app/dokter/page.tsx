@@ -47,7 +47,11 @@ export default function DokterDashboardPage() {
       const doctorName = getLoggedInDoctorName();
       const result = await fetchDoctorBookings(doctorName);
 
-      setSchedules(result.schedules.slice(0, 8));
+      setSchedules(
+        [...result.schedules]
+          .sort((current, next) => next.id - current.id)
+          .slice(0, 8)
+      );
       setSummary(result.summary);
     } catch (fetchError) {
       setSchedules([]);

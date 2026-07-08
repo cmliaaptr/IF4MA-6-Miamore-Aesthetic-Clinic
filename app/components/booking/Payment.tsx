@@ -73,7 +73,9 @@ export default function Payment({
                 className="mx-auto mt-3 h-48 w-48 object-contain"
               />
             ) : (
-              <QrisCode />
+              <div className="mx-auto mt-3 flex h-40 w-40 items-center justify-center rounded-md border border-dashed border-neutral-300 bg-neutral-50 px-4 text-xs font-semibold leading-5 text-neutral-500">
+                QRIS belum tersedia dari Midtrans
+              </div>
             )}
             <p className="mt-2 text-sm">Order ID : {orderId}</p>
           </div>
@@ -167,28 +169,6 @@ function InfoRow({ label, value, strong = false }: { label: string; value: strin
       <span>{label}</span>
       <span>:</span>
       <span className={strong ? "font-bold" : ""}>{value}</span>
-    </div>
-  );
-}
-
-function QrisCode() {
-  const activeCells = new Set([
-    0, 1, 2, 3, 4, 5, 6, 9, 10, 12, 13, 19, 22, 24, 26, 28, 30, 32, 34, 36,
-    39, 40, 41, 42, 43, 44, 45, 48, 50, 52, 54, 56, 58, 60, 65, 66, 68, 70,
-    73, 75, 77, 78, 80, 82, 84, 86, 88, 91, 92, 95, 96, 98, 100, 102, 104,
-    106, 108, 110, 112, 114, 116, 117, 118, 119, 120, 123, 125, 127, 129,
-    131, 133, 136, 138, 140, 142, 144, 146, 148, 150, 152, 156, 157, 158,
-    159, 160, 161, 162, 164, 166, 168,
-  ]);
-
-  return (
-    <div className="mx-auto mt-3 grid h-40 w-40 grid-cols-[repeat(13,1fr)] grid-rows-[repeat(13,1fr)] gap-0.5 bg-white p-2">
-      {Array.from({ length: 169 }).map((_, index) => (
-        <span
-          key={index}
-          className={activeCells.has(index) ? "bg-black" : "bg-white"}
-        />
-      ))}
     </div>
   );
 }

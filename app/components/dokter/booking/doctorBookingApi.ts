@@ -57,13 +57,38 @@ export function getLoggedInDoctorName() {
   }
 }
 
+export function getLoggedInDoctorId() {
+  try {
+    const rawUser = localStorage.getItem("user");
+    if (!rawUser) return 0;
+
+    const user = JSON.parse(rawUser) as LoggedInDoctor;
+
+    if (user.role !== "dokter" || typeof user.id_user !== "number") {
+      return 0;
+    }
+
+    return user.id_user;
+  } catch {
+    return 0;
+  }
+}
+
 export async function fetchDoctorBookings(doctorName: string) {
-  if (!doctorName) {
+  const doctorId = getLoggedInDoctorId();
+
+  if (!doctorId && !doctorName) {
     throw new Error("Silakan login sebagai dokter untuk melihat booking pasien.");
   }
 
   const url = new URL(`${API_BASE_URL}/api/bookings/doctor`);
-  url.searchParams.set("doctor_name", doctorName);
+  if (doctorId) {
+    url.searchParams.set("id_dokter", String(doctorId));
+  }
+
+  if (doctorName) {
+    url.searchParams.set("doctor_name", doctorName);
+  }
 
   const response = await fetch(url.toString(), {
     headers: {

@@ -12,6 +12,7 @@ class Booking extends Model
 
     protected $fillable = [
         'id_user',
+        'id_dokter',
         'order_id',
         'nama_lengkap',
         'tanggal_lahir',
@@ -43,6 +44,11 @@ class Booking extends Model
     public function pelanggan()
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');
+    }
+
+    public function dokter()
+    {
+        return $this->belongsTo(User::class, 'id_dokter', 'id_user');
     }
 
     public function treatmentResult()
