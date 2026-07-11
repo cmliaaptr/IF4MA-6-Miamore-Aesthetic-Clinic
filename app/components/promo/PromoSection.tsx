@@ -2,16 +2,34 @@ import PromoCard from "./PromoCard";
 
 const promoImages = [
   {
-    image: "/images/why-product.jpg",
-    title: "Promo Treatment Miamore 1",
+    image: "/images/treatment-hero.png",
+    title: "The Next Level Skincare",
+    eyebrow: "Miamore Beauty",
   },
   {
-    image: "/images/why-product.jpg",
-    title: "Promo Treatment Miamore 2",
+    image: "/images/acne.jpg",
+    title: "Acne Care Treatment",
+    eyebrow: "Kulit lebih terawat",
   },
   {
-    image: "/images/why-product.jpg",
-    title: "Promo Treatment Miamore 3",
+    image: "/images/brightening.jpg",
+    title: "Brightening Treatment",
+    eyebrow: "Wajah tampak lebih cerah",
+  },
+  {
+    image: "/images/flek.jpg",
+    title: "Laser Flek Treatment",
+    eyebrow: "Samarkan noda hitam",
+  },
+  {
+    image: "/images/co2 fractional.jpg",
+    title: "CO2 Fractional Treatment",
+    eyebrow: "Perawatan kulit bertekstur",
+  },
+  {
+    image: "/images/anti-aging.jpeg",
+    title: "Anti-Aging Treatment",
+    eyebrow: "Rawat kulit agar tampak segar",
   },
 ];
 
@@ -32,6 +50,7 @@ export default function PromoSection() {
                 key={`${promo.title}-${index}`}
                 image={promo.image}
                 title={promo.title}
+                eyebrow={promo.eyebrow}
               />
             ))}
           </div>
