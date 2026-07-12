@@ -2,18 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, LogOut, User } from "lucide-react";
+import { ChevronDown, User } from "lucide-react";
 
 type ProfileDropdownProps = {
   name: string;
   profileHref: string;
-  logoutHref?: string;
 };
 
 export default function ProfileDropdown({
   name,
   profileHref,
-  logoutHref = "/login",
 }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -51,15 +49,6 @@ export default function ProfileDropdown({
           >
             <User size={16} />
             Profile
-          </Link>
-          <Link
-            href={logoutHref}
-            role="menuitem"
-            className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
-            onClick={() => setIsOpen(false)}
-          >
-            <LogOut size={16} />
-            Logout
           </Link>
         </div>
       ) : null}
